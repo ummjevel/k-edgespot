@@ -38,10 +38,12 @@ class Classifier(nn.Module):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True)
+    parser.add_argument("--valid-manifest")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--tau", type=int, default=1, choices=[1, 2, 3, 4])
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=128)
+    parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--weight-decay", type=float, default=4e-5)
     parser.add_argument(
@@ -80,15 +82,31 @@ def main() -> None:
         raise ValueError("--distill-weight > 0 requires --teacher-embeddings")
 
     dataset = ManifestDataset(args.manifest, teacher_embeddings=args.teacher_embeddings)
-    valid_len = max(1, int(len(dataset) * 0.1))
-    train_len = len(dataset) - valid_len
-    train_set, valid_set = random_split(
-        dataset,
-        [train_len, valid_len],
-        generator=torch.Generator().manual_seed(2026),
+    if args.valid_manifest:
+        train_set = dataset
+        valid_set = ManifestDataset(args.valid_manifest, teacher_embeddings=args.teacher_embeddings)
+        if valid_set.labels != dataset.labels:
+            raise ValueError("--valid-manifest labels must match --manifest labels")
+    else:
+        valid_len = max(1, int(len(dataset) * 0.1))
+        train_len = len(dataset) - valid_len
+        train_set, valid_set = random_split(
+            dataset,
+            [train_len, valid_len],
+            generator=torch.Generator().manual_seed(2026),
+        )
+    train_loader = DataLoader(
+        train_set,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
     )
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
-    valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=4)
+    valid_loader = DataLoader(
+        valid_set,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+    )
 
     teacher_dim = dataset.teacher_dim if args.teacher_embeddings else None
     model = Classifier(args.tau, len(dataset.labels), teacher_dim=teacher_dim).to(args.device)

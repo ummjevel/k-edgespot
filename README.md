@@ -206,12 +206,25 @@ Sub-center ArcFace training:
 ```bash
 UV_CACHE_DIR=.uv-cache uv run python -m edgespot.train \
   --manifest data/manifests/splits/train.jsonl \
+  --valid-manifest data/manifests/splits/val.jsonl \
   --out-dir runs/edgespot-ko-arcface \
   --tau 1 \
   --loss subcenter_arcface \
   --arcface-centers 3 \
+  --batch-size 64 \
+  --num-workers 2 \
   --epochs 40
 ```
+
+Train EdgeSpot-1/2/3/4 in parallel on GPUs 5,6,7,8 with conservative CPU
+memory usage:
+
+```bash
+GPU_IDS=5,6,7,8 sbatch slurm/train_edgespot_scaf.sbatch
+```
+
+The Slurm script keeps audio loading streaming from disk, uses `batch_size=64`,
+and starts only two DataLoader workers per model by default.
 
 Paper-aligned teacher training and distillation. The EdgeSpot paper uses a
 pretrained Wav2Vec2.0 encoder up to the 16th transformer layer, an
@@ -251,6 +264,7 @@ Train the student with the paper objective:
 ```bash
 UV_CACHE_DIR=.uv-cache uv run python -m edgespot.train \
   --manifest data/manifests/splits/train.jsonl \
+  --valid-manifest data/manifests/splits/val.jsonl \
   --out-dir runs/edgespot-ko-paper-kd \
   --tau 1 \
   --objective paper_distill \
