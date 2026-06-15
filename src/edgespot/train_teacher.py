@@ -57,6 +57,7 @@ def main() -> None:
     parser.add_argument("--encoder-layer", type=int, default=16)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--arcface-centers", type=int, default=3)
     parser.add_argument("--arcface-scale", type=float, default=30.0)
@@ -73,7 +74,7 @@ def main() -> None:
         dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=args.num_workers,
         collate_fn=dataset.collate,
     )
     model = Wav2VecTeacher(
