@@ -1,0 +1,60 @@
+sample_rate: 16000
+clips_per_command_per_voice: 8
+commands:
+  - id: lights_on
+    text: "불 켜"
+  - id: lights_off
+    text: "불 꺼"
+  - id: volume_up
+    text: "볼륨 올려"
+  - id: volume_down
+    text: "볼륨 내려"
+  - id: music_play
+    text: "음악 틀어"
+  - id: music_stop
+    text: "음악 멈춰"
+  - id: next_track
+    text: "다음 곡"
+  - id: previous_track
+    text: "이전 곡"
+  - id: timer_start
+    text: "타이머 시작"
+  - id: timer_stop
+    text: "타이머 중지"
+  - id: alarm_set
+    text: "알람 맞춰"
+  - id: weather
+    text: "날씨 알려줘"
+voice_design_prompts:
+  - "A young adult Korean woman, clear mid-pitch voice, moderate pace, calm and professional"
+  - "A young adult Korean man, warm baritone, steady pace, friendly and articulate"
+  - "A middle-aged Korean woman, slightly low pitch, measured pace, confident tone"
+  - "A middle-aged Korean man, deep resonant voice, slow deliberate pace"
+  - "An older adult Korean woman, soft gentle voice, slower pace, kind tone"
+  - "An older adult Korean man, gravelly tenor, moderate pace, matter-of-fact"
+  - "A young Korean woman, bright energetic tone, slightly faster pace"
+  - "A young Korean man, light tenor, quick conversational pace"
+  - "A Korean woman in her thirties, smooth alto, even pace"
+  - "A Korean man in his thirties, clear baritone, businesslike pace"
+  - "A Korean speaker with a higher pitch, enthusiastic and upbeat, medium-fast pace"
+  - "A Korean speaker with a lower pitch, relaxed and laid-back, slower pace"
+  - "A young adult Korean speaker, gender-neutral delivery, soft volume, careful enunciation"
+  - "A confident Korean presenter voice, strong projection, moderate speed"
+  - "A quiet intimate Korean voice, close-mic feel, slow and clear"
+  - "A Korean news-anchor style voice, authoritative, even rhythm"
+  - "A friendly Korean customer-service tone, slightly smiling, medium pace"
+  - "A tired but clear Korean voice, subdued energy, steady pace"
+  - "A cheerful animated Korean voice, wide pitch range, lively pace"
+  - "A serious formal Korean voice, minimal emotion, precise articulation"
+  - "A Korean speaker with slight vocal fry, casual young adult, medium pace"
+  - "A very smooth polished Korean voice, studio quality, slow to medium pace"
+  - "A nasal bright Korean tone, energetic, faster than average pace"
+  - "A breathy soft Korean voice, gentle, slower pace"
+  - "A robust athletic-sounding Korean voice, strong and direct, medium pace"
+  - "A scholarly Korean tone, thoughtful pauses, slower academic pace"
+  - "A teenager-sounding Korean voice, casual, slightly fast, light pitch"
+  - "A mature Korean executive voice, controlled low dynamics, steady"
+  - "A sing-song playful Korean tone, varied pitch, medium pace"
+  - "A monotone flat Korean delivery, robotic clarity, even speed"
+  - "A husky Korean voice, low energy, medium-slow pace"
+  - "A crisp precise Korean voice, minimal accent, fast clear speech"

@@ -1,0 +1,16 @@
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+*.egg-info/
+data/audio/
+data/manifests/*.jsonl
+data/manifests/*.done.jsonl
+data/teacher/
+logs/
+runs/
+models/*
+!models/.gitkeep
+*.pt
+*.ckpt
