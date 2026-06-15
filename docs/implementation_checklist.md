@@ -8,6 +8,21 @@
 - [x] Built the TTS synthesis manifest with Korean commands and TTS non-command text.
 - [x] Added Qwen3-TTS synthesis scripts and Slurm jobs for GPUs 4,5,6,7.
 - [x] Submitted the Qwen3-TTS Slurm synthesis job.
+- [x] Completed Qwen3-TTS synthesis:
+  - [x] 13,072 total wav files generated.
+  - [x] 3,072 command utterances generated.
+  - [x] 10,000 negative utterances generated.
+  - [x] Four shards completed with 3,268 rows each.
+  - [x] Combined shard manifests into `tts_commands_and_negatives.done.jsonl`.
+- [x] Validated generated audio:
+  - [x] 13,072/13,072 files present and readable.
+  - [x] Source wav files are 24 kHz.
+  - [x] 24 kHz validation passed with no missing or bad audio.
+  - [x] Training loader will resample to 16 kHz and crop/pad to 1 second.
+- [x] Split generated data into train/val/test manifests:
+  - [x] Train: 10,212 rows.
+  - [x] Val: 1,225 rows.
+  - [x] Test: 1,635 rows.
 - [x] Added manifest collection, validation, splitting, and negative-manifest utilities.
 - [x] Implemented the EdgeSpot-style student model:
   - [x] 40 x 101 mel input path.
@@ -31,6 +46,14 @@
   - [x] 5-epoch linear warmup.
   - [x] Step-wise cosine learning-rate decay.
   - [x] Tau-aware SpecAugment enablement.
+  - [x] Explicit `--valid-manifest` support.
+  - [x] Configurable `--num-workers` to limit CPU memory/process pressure.
+- [x] Added conservative SCAF training Slurm script:
+  - [x] `slurm/train_edgespot_scaf.sbatch`.
+  - [x] Default GPU mapping: 5,6,7,8.
+  - [x] Default tau mapping: 1,2,3,4.
+  - [x] Default batch size: 64.
+  - [x] Default DataLoader workers per model: 2.
 - [x] Documented MSWC usage and NanoWakeWord as a later candidate.
 
 ## Paper Items Implemented
@@ -49,19 +72,19 @@
 - [x] AdamW/Adam-style optimizer path with weight decay `4e-5`.
 - [x] 40-epoch default training.
 - [x] Prototype-based K-shot evaluation.
+- [x] External train/validation split support.
 
 ## Remaining Work
 
-- [ ] Finish and validate the current Qwen3-TTS synthesis job.
-- [ ] Collect shard manifests into `data/manifests/tts_commands_and_negatives.done.jsonl`.
-- [ ] Run audio validation and fix any bad/missing generated clips.
-- [ ] Split generated data into train/val/test manifests.
-- [ ] Run a small smoke training job on a subset before full training.
+- [ ] Start SCAF baseline training on GPUs 5,6,7,8.
+- [ ] Monitor `runs/edgespot-ko-scaf-tau{1,2,3,4}` and per-tau logs.
+- [ ] Run a small smoke training job first if cluster load or memory pressure is uncertain.
+- [ ] Run few-shot prototype evaluation for SCAF baseline checkpoints.
 - [ ] Train the Wav2Vec2 teacher head on the Korean manifest.
 - [ ] Export teacher embeddings with `edgespot.teacher --teacher-checkpoint`.
 - [ ] Train the EdgeSpot student with `--objective paper_distill`.
 - [ ] Run few-shot prototype evaluation for 1-shot, 5-shot, and 10-shot.
-- [ ] Add Slurm scripts for teacher training, teacher embedding export, student training, and evaluation.
+- [ ] Add Slurm scripts for teacher training, teacher embedding export, distillation training, and evaluation.
 - [ ] Add MAC/parameter counting to compare EdgeSpot-1/2/3/4 against the paper table.
 - [ ] Add a BC-ResNet baseline trained with the same KD+SCAF protocol.
 - [ ] Replace feature-domain time-stretch with waveform-level time-stretch for stricter paper reproduction.
@@ -72,6 +95,7 @@
   - [ ] Korean few-shot command enrollment trials.
 - [ ] Add Korean hard negatives and command-like confuser words.
 - [ ] Add final model export path for on-device inference.
+- [ ] Push the local training-prep commit if remote synchronization is needed.
 
 ## Open Technical Notes
 
@@ -83,3 +107,12 @@
   fewer layers, the highest available layer is used.
 - The paper applies waveform time-stretch for tau 2/3/4. The current
   implementation approximates this with feature-domain interpolation.
+- Generated Qwen3-TTS wav files are 24 kHz. The current dataset loader resamples
+  to 16 kHz at load time and crops/pads each waveform to 1 second. This avoids
+  creating another full normalized audio copy, keeping CPU memory usage lower at
+  the cost of per-epoch resampling work.
+- The current SCAF training script is intentionally conservative for CPU memory:
+  it streams audio from disk, uses `batch_size=64`, and uses two DataLoader
+  workers per model by default.
+- Local branch `main` currently includes a training-prep commit that has not
+  been pushed after the interrupted push attempt.
