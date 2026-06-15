@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import DataLoader, random_split
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from edgespot.augment import apply_specaugment
@@ -69,6 +70,7 @@ def main() -> None:
     parser.add_argument("--scaf-weight", type=float, default=5e-5)
     parser.add_argument("--warmup-epochs", type=int, default=5)
     parser.add_argument("--specaugment", choices=["auto", "off", "on"], default="auto")
+    parser.add_argument("--no-tensorboard", action="store_true")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
@@ -132,6 +134,9 @@ def main() -> None:
     use_specaugment = args.specaugment == "on" or (
         args.specaugment == "auto" and args.tau in {2, 3, 4}
     )
+    writer = None
+    if not args.no_tensorboard:
+        writer = SummaryWriter(log_dir=out_dir / "tensorboard")
 
     best_score = -float("inf")
     for epoch in range(args.epochs):
@@ -180,6 +185,11 @@ def main() -> None:
             f"epoch={epoch + 1} loss={total_loss / len(train_set):.4f} "
             f"{valid_name}={valid_score:.4f}"
         )
+        if writer is not None:
+            epoch_idx = epoch + 1
+            writer.add_scalar("train/loss", total_loss / len(train_set), epoch_idx)
+            writer.add_scalar(f"valid/{valid_name}", valid_score, epoch_idx)
+            writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], epoch_idx)
         if valid_score >= best_score:
             best_score = valid_score
             torch.save(
@@ -194,6 +204,8 @@ def main() -> None:
                 },
                 out_dir / "best.pt",
             )
+    if writer is not None:
+        writer.close()
 
 
 @torch.no_grad()

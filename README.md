@@ -216,15 +216,40 @@ UV_CACHE_DIR=.uv-cache uv run python -m edgespot.train \
   --epochs 40
 ```
 
-Train EdgeSpot-1/2/3/4 in parallel on GPUs 5,6,7,8 with conservative CPU
+Train EdgeSpot-1/2/3/4 in parallel on GPUs 4,5,6,7 with conservative CPU
 memory usage:
 
 ```bash
-GPU_IDS=5,6,7,8 sbatch slurm/train_edgespot_scaf.sbatch
+GPU_IDS=4,5,6,7 BATCH_SIZE=512 sbatch slurm/train_edgespot_scaf.sbatch
 ```
 
-The Slurm script keeps audio loading streaming from disk, uses `batch_size=64`,
+The Slurm script keeps audio loading streaming from disk, uses `batch_size=512`,
 and starts only two DataLoader workers per model by default.
+
+TensorBoard logs are written under each run directory:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run tensorboard --logdir runs --port 6006
+```
+
+Run few-shot prototype evaluation after training:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python -m edgespot.eval \
+  --checkpoint runs/edgespot-ko-scaf-tau1/best.pt \
+  --support-manifest data/manifests/splits/val.jsonl \
+  --query-manifest data/manifests/splits/test.jsonl \
+  --out runs/edgespot-ko-scaf-tau1/prototype_eval_k5.json \
+  --k-shot 5 \
+  --batch-size 512 \
+  --num-workers 2
+```
+
+Or submit all tau 1/2/3/4 evaluations for 1-shot, 5-shot, and 10-shot:
+
+```bash
+sbatch slurm/eval_edgespot_prototypes.sbatch
+```
 
 Paper-aligned teacher training and distillation. The EdgeSpot paper uses a
 pretrained Wav2Vec2.0 encoder up to the 16th transformer layer, an

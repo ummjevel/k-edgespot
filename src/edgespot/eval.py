@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--out", required=True)
     parser.add_argument("--k-shot", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=128)
+    parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
@@ -37,8 +38,8 @@ def main() -> None:
 
     support = ManifestDataset(args.support_manifest)
     query = ManifestDataset(args.query_manifest)
-    support_embeddings = _embed(model, support, args.batch_size, args.device)
-    query_embeddings = _embed(model, query, args.batch_size, args.device)
+    support_embeddings = _embed(model, support, args.batch_size, args.num_workers, args.device)
+    query_embeddings = _embed(model, query, args.batch_size, args.num_workers, args.device)
 
     prototypes = _build_prototypes(support_embeddings, args.k_shot)
     scores, targets = _score_queries(query_embeddings, prototypes)
@@ -54,8 +55,14 @@ def main() -> None:
 
 
 @torch.no_grad()
-def _embed(model: Classifier, dataset: ManifestDataset, batch_size: int, device: str) -> list[dict]:
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+def _embed(
+    model: Classifier,
+    dataset: ManifestDataset,
+    batch_size: int,
+    num_workers: int,
+    device: str,
+) -> list[dict]:
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     rows = []
     offset = 0
     for batch in tqdm(loader, desc="embed"):

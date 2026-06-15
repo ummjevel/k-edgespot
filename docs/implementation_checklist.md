@@ -50,10 +50,21 @@
   - [x] Configurable `--num-workers` to limit CPU memory/process pressure.
 - [x] Added conservative SCAF training Slurm script:
   - [x] `slurm/train_edgespot_scaf.sbatch`.
-  - [x] Default GPU mapping: 5,6,7,8.
+  - [x] Default GPU mapping: 4,5,6,7.
   - [x] Default tau mapping: 1,2,3,4.
-  - [x] Default batch size: 64.
+  - [x] Default batch size: 512.
   - [x] Default DataLoader workers per model: 2.
+- [x] Added TensorBoard logging:
+  - [x] Per-epoch train loss.
+  - [x] Per-epoch validation metric.
+  - [x] Per-epoch learning rate.
+- [x] Added prototype evaluation Slurm script:
+  - [x] `slurm/eval_edgespot_prototypes.sbatch`.
+  - [x] Evaluates tau 1,2,3,4 checkpoints.
+  - [x] Evaluates 1-shot, 5-shot, and 10-shot prototype matching.
+- [x] Submitted dependent prototype evaluation job:
+  - [x] Training job: `3262`.
+  - [x] Evaluation job: `3263`, waiting on `afterok:3262`.
 - [x] Documented MSWC usage and NanoWakeWord as a later candidate.
 
 ## Paper Items Implemented
@@ -76,15 +87,13 @@
 
 ## Remaining Work
 
-- [ ] Start SCAF baseline training on GPUs 5,6,7,8.
-- [ ] Monitor `runs/edgespot-ko-scaf-tau{1,2,3,4}` and per-tau logs.
-- [ ] Run a small smoke training job first if cluster load or memory pressure is uncertain.
-- [ ] Run few-shot prototype evaluation for SCAF baseline checkpoints.
+- [ ] Monitor running SCAF baseline training job `3262`.
+- [ ] Review `runs/edgespot-ko-scaf-tau{1,2,3,4}` checkpoints and per-tau logs.
+- [ ] Review queued few-shot prototype evaluation results after job `3263` completes.
 - [ ] Train the Wav2Vec2 teacher head on the Korean manifest.
 - [ ] Export teacher embeddings with `edgespot.teacher --teacher-checkpoint`.
 - [ ] Train the EdgeSpot student with `--objective paper_distill`.
-- [ ] Run few-shot prototype evaluation for 1-shot, 5-shot, and 10-shot.
-- [ ] Add Slurm scripts for teacher training, teacher embedding export, distillation training, and evaluation.
+- [ ] Add Slurm scripts for teacher training, teacher embedding export, and distillation training.
 - [ ] Add MAC/parameter counting to compare EdgeSpot-1/2/3/4 against the paper table.
 - [ ] Add a BC-ResNet baseline trained with the same KD+SCAF protocol.
 - [ ] Replace feature-domain time-stretch with waveform-level time-stretch for stricter paper reproduction.
@@ -95,7 +104,6 @@
   - [ ] Korean few-shot command enrollment trials.
 - [ ] Add Korean hard negatives and command-like confuser words.
 - [ ] Add final model export path for on-device inference.
-- [ ] Push the local training-prep commit if remote synchronization is needed.
 
 ## Open Technical Notes
 
@@ -112,7 +120,5 @@
   creating another full normalized audio copy, keeping CPU memory usage lower at
   the cost of per-epoch resampling work.
 - The current SCAF training script is intentionally conservative for CPU memory:
-  it streams audio from disk, uses `batch_size=64`, and uses two DataLoader
+  it streams audio from disk, uses `batch_size=512`, and uses two DataLoader
   workers per model by default.
-- Local branch `main` currently includes a training-prep commit that has not
-  been pushed after the interrupted push attempt.
