@@ -28,7 +28,7 @@ mkdir -p /tmp/numba-cache /tmp/torch-cache
 export NUMBA_CACHE_DIR="${NUMBA_CACHE_DIR:-/tmp/numba-cache}"
 export TORCH_HOME="${TORCH_HOME:-/tmp/torch-cache}"
 export HF_HOME="${HF_HOME:-${CACHE_DIR}}"
-export HF_HUB_CACHE="${HF_HUB_CACHE:-${CACHE_DIR}/hub}"
+export HF_HUB_CACHE="${HF_HUB_CACHE:-${CACHE_DIR}}"
 unset TRANSFORMERS_CACHE
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
 export MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"

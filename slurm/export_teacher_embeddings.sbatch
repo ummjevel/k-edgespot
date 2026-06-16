@@ -26,7 +26,7 @@ mkdir -p logs "$(dirname "${OUT}")" "${CACHE_DIR}"
 
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${PROJECT_DIR}/.uv-cache}"
 export HF_HOME="${HF_HOME:-${CACHE_DIR}}"
-export HF_HUB_CACHE="${HF_HUB_CACHE:-${CACHE_DIR}/hub}"
+export HF_HUB_CACHE="${HF_HUB_CACHE:-${CACHE_DIR}}"
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}"
 export MKL_NUM_THREADS="${MKL_NUM_THREADS:-2}"
 export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-2}"

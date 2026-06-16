@@ -124,6 +124,17 @@ UV_CACHE_DIR=.uv-cache uv run python scripts/build_tts_manifest.py \
   --out data/manifests/tts_commands_with_hard_negatives.jsonl
 ```
 
+Generate only hard-negative prompts when the command audio already exists:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/build_tts_manifest.py \
+  --config configs/korean_commands.yaml \
+  --skip-commands \
+  --negative-texts configs/korean_hard_negatives.txt \
+  --negative-text-takes 2 \
+  --out data/manifests/tts_hard_negatives.jsonl
+```
+
 Synthesize audio with Qwen3-TTS:
 
 ```bash

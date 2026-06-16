@@ -93,7 +93,30 @@
 - [x] Added short Korean hard-negative seed prompts from false accepts:
   - [x] `configs/korean_hard_negatives.txt`.
   - [x] `scripts/build_tts_manifest.py --negative-texts`.
+  - [x] `scripts/build_tts_manifest.py --skip-commands`.
   - [x] `docs/false_accept_review.md`.
+- [x] Synthesized hard-negative audio from `configs/korean_hard_negatives.txt`:
+  - [x] 1,920 hard-negative wav files generated.
+  - [x] `data/manifests/tts_hard_negatives.done.jsonl`.
+  - [x] 24 kHz audio validation passed with no missing or bad audio.
+- [x] Built train-only augmented manifest:
+  - [x] `data/manifests/splits/train_with_hard_negatives.jsonl`.
+  - [x] 12,132 train rows: 10,212 original train + 1,920 hard negatives.
+- [x] Submitted teacher embedding export for augmented train:
+  - [x] Job `3276`.
+  - [x] Output target `data/teacher/xls-r-300m_teacher64_train_hard.npz`.
+- [x] Built all-split teacher embedding manifest for distill validation lookup:
+  - [x] `data/manifests/splits/all_with_hard_negatives.jsonl`.
+  - [x] 14,992 rows: augmented train + original val/test.
+- [x] Exported all-hard teacher embeddings:
+  - [x] Job `3279`.
+  - [x] `data/teacher/xls-r-300m_teacher64_all_hard.npz`.
+- [x] Submitted hard-negative tau 4 distill training:
+  - [x] Job `3280`.
+  - [x] Run target `runs/edgespot-ko-distill-hard-tau4`.
+  - [x] Epoch 1 validation passed.
+- [x] Submitted dependent hard-negative tau 4 prototype evaluation:
+  - [x] Job `3281`, dependency `afterok:3280`.
 
 ## Paper Items Implemented
 
@@ -115,8 +138,8 @@
 
 ## Remaining Work
 
-- [ ] Synthesize hard-negative audio from `configs/korean_hard_negatives.txt`.
-- [ ] Retrain or fine-tune the best distilled setup with short hard negatives.
+- [ ] Wait for hard-negative tau 4 distill job `3280`.
+- [ ] Review dependent prototype eval job `3281`.
 - [ ] Review top false accepts after hard-negative training and expand command-like confusers.
 - [ ] Evaluate the best distilled checkpoint against real-recording Korean negative/domain-test data.
 - [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.

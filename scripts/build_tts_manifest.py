@@ -17,6 +17,7 @@ def main() -> None:
     parser.add_argument("--negative-seed", type=int, default=2026)
     parser.add_argument("--negative-texts")
     parser.add_argument("--negative-text-takes", type=int, default=1)
+    parser.add_argument("--skip-commands", action="store_true")
     args = parser.parse_args()
 
     config = yaml.safe_load(Path(args.config).read_text())
@@ -24,20 +25,21 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
 
     rows = []
-    for command in config["commands"]:
-        for voice_idx, voice_prompt in enumerate(config["voice_design_prompts"]):
-            for take in range(config["clips_per_command_per_voice"]):
-                rows.append(
-                    {
-                        "id": f"{command['id']}_v{voice_idx:03d}_{take:03d}",
-                        "label": command["id"],
-                        "text": command["text"],
-                        "language": "ko",
-                        "voice_prompt": voice_prompt,
-                        "take": take,
-                        "sample_rate": config.get("sample_rate", 16000),
-                    }
-                )
+    if not args.skip_commands:
+        for command in config["commands"]:
+            for voice_idx, voice_prompt in enumerate(config["voice_design_prompts"]):
+                for take in range(config["clips_per_command_per_voice"]):
+                    rows.append(
+                        {
+                            "id": f"{command['id']}_v{voice_idx:03d}_{take:03d}",
+                            "label": command["id"],
+                            "text": command["text"],
+                            "language": "ko",
+                            "voice_prompt": voice_prompt,
+                            "take": take,
+                            "sample_rate": config.get("sample_rate", 16000),
+                        }
+                    )
 
     if args.negative_metadata:
         rows.extend(
