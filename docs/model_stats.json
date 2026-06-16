@@ -1,0 +1,30 @@
+[
+  {
+    "tau": 1,
+    "parameters": 16498,
+    "trainable_parameters": 16498,
+    "size_fp32_mb": 0.065992,
+    "size_int8_mb": 0.016498
+  },
+  {
+    "tau": 2,
+    "parameters": 43230,
+    "trainable_parameters": 43230,
+    "size_fp32_mb": 0.17292,
+    "size_int8_mb": 0.04323
+  },
+  {
+    "tau": 3,
+    "parameters": 80458,
+    "trainable_parameters": 80458,
+    "size_fp32_mb": 0.321832,
+    "size_int8_mb": 0.080458
+  },
+  {
+    "tau": 4,
+    "parameters": 128182,
+    "trainable_parameters": 128182,
+    "size_fp32_mb": 0.512728,
+    "size_int8_mb": 0.128182
+  }
+]

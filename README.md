@@ -232,6 +232,42 @@ TensorBoard logs are written under each run directory:
 UV_CACHE_DIR=.uv-cache uv run tensorboard --logdir runs --port 6006
 ```
 
+Summarize prototype-evaluation results across run directories:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/summarize_results.py
+```
+
+The generated report is written to:
+
+```text
+docs/results_summary.md
+```
+
+Count EdgeSpot-1/2/3/4 model parameters:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/model_stats.py
+```
+
+Inspect high-scoring false accepts for the current best distilled model:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/inspect_false_accepts.py \
+  --checkpoint runs/edgespot-ko-distill-tau4/best.pt \
+  --support-manifest data/manifests/splits/val.jsonl \
+  --query-manifest data/manifests/splits/test.jsonl \
+  --out docs/false_accepts_distill_tau4_k10_far1.jsonl \
+  --k-shot 10 \
+  --far 0.01 \
+  --top-n 100 \
+  --batch-size 512 \
+  --num-workers 0
+```
+
+Use `--num-workers 0` in local sandboxed sessions. Slurm jobs can use worker
+processes when the cluster environment permits multiprocessing sockets.
+
 Run few-shot prototype evaluation after training:
 
 ```bash
@@ -272,6 +308,19 @@ UV_CACHE_DIR=.uv-cache uv run python -m edgespot.train_teacher \
 For Korean experiments, `facebook/wav2vec2-xls-r-300m` is a configurable
 multilingual Wav2Vec2-family option. The EdgeSpot paper itself says Wav2Vec2.0
 and does not state XLS-R as the reported teacher.
+
+Project model cache path:
+
+```text
+/data/users/voice/zoey/todak/impl/EdgeSpot/models
+```
+
+Shared dataset root and cache paths:
+
+```text
+/data/datasets/voice
+/data/datasets/voice/.cache
+```
 
 Export trained 64-D teacher embeddings:
 

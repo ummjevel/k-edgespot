@@ -66,6 +66,30 @@
   - [x] Training job: `3262`.
   - [x] Evaluation job: `3263`, waiting on `afterok:3262`.
 - [x] Documented MSWC usage and NanoWakeWord as a later candidate.
+- [x] Completed SCAF baseline training and prototype evaluation.
+- [x] Added teacher training, teacher embedding export, distillation training, and distillation evaluation Slurm scripts.
+- [x] Trained XLS-R 300M teacher head with SCAF:
+  - [x] `runs/teacher-xls-r-300m-scaf/best_teacher.pt`.
+- [x] Exported teacher embeddings:
+  - [x] `data/teacher/xls-r-300m_teacher64_all.npz`.
+- [x] Trained distilled EdgeSpot-1/2/3/4 student runs:
+  - [x] `runs/edgespot-ko-distill-tau1/best.pt`.
+  - [x] `runs/edgespot-ko-distill-tau2/best.pt`.
+  - [x] `runs/edgespot-ko-distill-tau3/best.pt`.
+  - [x] `runs/edgespot-ko-distill-tau4/best.pt`.
+- [x] Evaluated distilled student checkpoints with 1-shot, 5-shot, and 10-shot prototype matching.
+- [x] Downloaded external data for later experiments:
+  - [x] Google Speech Commands v2 tarball under `/data/datasets/voice/google_speech_commands`.
+  - [x] MSWC metadata under `/data/datasets/voice/mswc`.
+  - [x] MSWC English audio, splits, and alignments under `/data/datasets/voice/mswc/en`.
+- [x] Added result analysis utilities:
+  - [x] `scripts/summarize_results.py`.
+  - [x] `scripts/model_stats.py`.
+  - [x] `scripts/inspect_false_accepts.py`.
+- [x] Generated current result reports:
+  - [x] `docs/results_summary.md`.
+  - [x] `docs/model_stats.json`.
+  - [x] `docs/false_accepts_distill_tau4_k10_far1.jsonl`.
 
 ## Paper Items Implemented
 
@@ -87,14 +111,10 @@
 
 ## Remaining Work
 
-- [ ] Monitor running SCAF baseline training job `3262`.
-- [ ] Review `runs/edgespot-ko-scaf-tau{1,2,3,4}` checkpoints and per-tau logs.
-- [ ] Review queued few-shot prototype evaluation results after job `3263` completes.
-- [ ] Train the Wav2Vec2 teacher head on the Korean manifest.
-- [ ] Export teacher embeddings with `edgespot.teacher --teacher-checkpoint`.
-- [ ] Train the EdgeSpot student with `--objective paper_distill`.
-- [ ] Add Slurm scripts for teacher training, teacher embedding export, and distillation training.
-- [ ] Add MAC/parameter counting to compare EdgeSpot-1/2/3/4 against the paper table.
+- [ ] Review top false accepts in `docs/false_accepts_distill_tau4_k10_far1.jsonl` and create hard-negative text/audio from similar confusers.
+- [ ] Evaluate the best distilled checkpoint against real-recording Korean negative/domain-test data.
+- [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.
+- [ ] Add MAC counting to compare EdgeSpot-1/2/3/4 against the paper table.
 - [ ] Add a BC-ResNet baseline trained with the same KD+SCAF protocol.
 - [ ] Replace feature-domain time-stretch with waveform-level time-stretch for stricter paper reproduction.
 - [ ] Confirm exact teacher model from prior work [6] if exact reproduction is required.
@@ -104,6 +124,7 @@
   - [ ] Korean few-shot command enrollment trials.
 - [ ] Add Korean hard negatives and command-like confuser words.
 - [ ] Add final model export path for on-device inference.
+- [ ] Add quantization/export benchmark for actual on-device target constraints.
 
 ## Open Technical Notes
 
