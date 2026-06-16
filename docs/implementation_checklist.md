@@ -90,6 +90,10 @@
   - [x] `docs/results_summary.md`.
   - [x] `docs/model_stats.json`.
   - [x] `docs/false_accepts_distill_tau4_k10_far1.jsonl`.
+- [x] Added short Korean hard-negative seed prompts from false accepts:
+  - [x] `configs/korean_hard_negatives.txt`.
+  - [x] `scripts/build_tts_manifest.py --negative-texts`.
+  - [x] `docs/false_accept_review.md`.
 
 ## Paper Items Implemented
 
@@ -111,7 +115,9 @@
 
 ## Remaining Work
 
-- [ ] Review top false accepts in `docs/false_accepts_distill_tau4_k10_far1.jsonl` and create hard-negative text/audio from similar confusers.
+- [ ] Synthesize hard-negative audio from `configs/korean_hard_negatives.txt`.
+- [ ] Retrain or fine-tune the best distilled setup with short hard negatives.
+- [ ] Review top false accepts after hard-negative training and expand command-like confusers.
 - [ ] Evaluate the best distilled checkpoint against real-recording Korean negative/domain-test data.
 - [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.
 - [ ] Add MAC counting to compare EdgeSpot-1/2/3/4 against the paper table.

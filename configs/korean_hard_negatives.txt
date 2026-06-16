@@ -1,0 +1,32 @@
+# Short Korean non-command utterances that can sound wakeword-like.
+# Seeded from false accepts in docs/false_accepts_distill_tau4_k10_far1.jsonl.
+괴롭다
+두렵다
+뼈아프다
+그립다
+아프다
+힘들다
+무섭다
+싫다
+졸리다
+춥다
+덥다
+어둡다
+밝다
+외롭다
+답답하다
+불편하다
+이상하다
+괜찮다
+됐다
+아니다
+맞다
+몰라
+글쎄
+잠깐
+아이고
+아휴
+어머
+진짜
+벌써
+나중에

@@ -106,8 +106,23 @@ paper-style open-set evaluation. The simplest alternatives are:
 
 - Generate Korean general-speech negative prompts and synthesize them with the
   same Qwen3-TTS pipeline.
+- Add short command-like hard negatives from `configs/korean_hard_negatives.txt`.
 - Use real Korean recordings as validation-only or hard-negative data.
 - Use MSWC/GSC-style non-target spoken words for paper-aligned experiments.
+
+The hard-negative seed file is intended for short non-command utterances that
+can be confused with commands, such as `괴롭다` or `두렵다`. These were observed
+as false accepts against command labels like `lights_off`.
+
+Generate a manifest with command utterances plus hard-negative TTS prompts:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/build_tts_manifest.py \
+  --config configs/korean_commands.yaml \
+  --negative-texts configs/korean_hard_negatives.txt \
+  --negative-text-takes 2 \
+  --out data/manifests/tts_commands_with_hard_negatives.jsonl
+```
 
 Synthesize audio with Qwen3-TTS:
 

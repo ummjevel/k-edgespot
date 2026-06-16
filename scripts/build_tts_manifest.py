@@ -15,6 +15,8 @@ def main() -> None:
     parser.add_argument("--negative-metadata")
     parser.add_argument("--negative-limit", type=int, default=0)
     parser.add_argument("--negative-seed", type=int, default=2026)
+    parser.add_argument("--negative-texts")
+    parser.add_argument("--negative-text-takes", type=int, default=1)
     args = parser.parse_args()
 
     config = yaml.safe_load(Path(args.config).read_text())
@@ -45,6 +47,16 @@ def main() -> None:
                 sample_rate=config.get("sample_rate", 16000),
                 limit=args.negative_limit,
                 seed=args.negative_seed,
+            )
+        )
+
+    if args.negative_texts:
+        rows.extend(
+            _negative_rows_from_texts(
+                text_path=Path(args.negative_texts),
+                voice_prompts=config["voice_design_prompts"],
+                sample_rate=config.get("sample_rate", 16000),
+                takes=args.negative_text_takes,
             )
         )
 
@@ -92,6 +104,37 @@ def _negative_rows_from_metadata(
                 "source_text_id": utt_id,
             }
         )
+    return rows
+
+
+def _negative_rows_from_texts(
+    text_path: Path,
+    voice_prompts: list[str],
+    sample_rate: int,
+    takes: int,
+) -> list[dict]:
+    texts = [
+        line.strip()
+        for line in text_path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+    rows = []
+    for text_idx, text in enumerate(texts):
+        for voice_idx, voice_prompt in enumerate(voice_prompts):
+            for take in range(takes):
+                rows.append(
+                    {
+                        "id": f"hard_negative_{text_idx:04d}_v{voice_idx:03d}_{take:03d}",
+                        "label": "__negative__",
+                        "text": text,
+                        "language": "ko",
+                        "voice_prompt": voice_prompt,
+                        "take": take,
+                        "sample_rate": sample_rate,
+                        "source": "hard_negative_text",
+                    }
+                )
     return rows
 
 
