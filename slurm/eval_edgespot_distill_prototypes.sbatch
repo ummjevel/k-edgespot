@@ -10,7 +10,8 @@
 
 set -euo pipefail
 
+PROJECT_DIR="${PROJECT_DIR:-/data/users/voice/zoey/todak/impl/EdgeSpot}"
 export RUN_PREFIX="${RUN_PREFIX:-edgespot-ko-distill-tau}"
 export GPU_IDS="${GPU_IDS:-2,3}"
 
-exec "$(dirname "$0")/eval_edgespot_prototypes.sbatch"
+exec bash "${PROJECT_DIR}/slurm/eval_edgespot_prototypes.sbatch"
