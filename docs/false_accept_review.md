@@ -45,3 +45,33 @@ The new top false accepts are no longer dominated by the original short state
 utterances. Remaining examples include other short or command-like phrases such
 as `즐겁다` and `아이 추운데.` plus longer sentences whose acoustic rhythm still
 matches command prototypes.
+
+These remaining patterns were added to `configs/korean_hard_negatives.txt`:
+
+```text
+즐겁다
+아이 추운데
+추운데
+뭐 하는 짓입니까
+불길하다
+젊다
+죽었다
+위험하다
+공부했습니다
+```
+
+## Real-Recording Negative Domain-Test
+
+The best hard-negative distilled checkpoint was evaluated against the original
+test positives plus 5,000 real-recording Korean negatives:
+
+```text
+runs/edgespot-ko-distill-hard-tau4/prototype_eval_realneg5k_k10.json
+```
+
+At k=10, AUC was 0.9222, Recall@FAR1% was 0.6276, and Recall@FAR5% was
+0.8229. This is comparable to the TTS-negative test result, so the current
+prototype model does not show an immediate collapse on real-recording negatives.
+The next useful review item is extracting false accepts from this domain-test
+set and adding the strongest confusers into another hard-negative synthesis
+round.

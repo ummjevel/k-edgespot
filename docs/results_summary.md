@@ -52,4 +52,15 @@ Generated from prototype evaluation JSON files under `runs/`.
 - The best SCAF-only baseline is `scaf`, tau 2, 10-shot.
 - The best distilled model is `distill`, tau 4, 10-shot.
 - The hard-negative tau 4 run lowers AUC slightly but improves recall at strict FARs.
-- Next validation should use real-recording negative/domain-test data and streaming-style metrics.
+- Real-recording negative domain-test has now been run for `distill-hard`, tau 4,
+  10-shot:
+  - Query set: original test positives plus 5,000 real-recording Korean negatives.
+  - AUC: 0.9222.
+  - Recall@FAR0.1%: 0.1354.
+  - Recall@FAR1%: 0.6276.
+  - Recall@FAR5%: 0.8229.
+- Compared with the TTS-negative test for the same checkpoint, real-recording
+  negatives did not cause an immediate domain collapse. FAR1 recall improved
+  from 0.5911 to 0.6276, while FAR0.1 recall dropped from 0.1510 to 0.1354.
+- Next validation should add real-recording false-accept inspection and
+  streaming-style metrics.

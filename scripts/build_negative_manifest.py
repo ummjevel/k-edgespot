@@ -10,6 +10,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--metadata", required=True)
     parser.add_argument("--audio-root", required=True)
+    parser.add_argument(
+        "--flat-audio-dir",
+        help="Optional directory containing wav files flattened by basename.",
+    )
     parser.add_argument("--out", required=True)
     parser.add_argument("--limit", type=int, default=20000)
     parser.add_argument("--seed", type=int, default=2026)
@@ -17,6 +21,7 @@ def main() -> None:
 
     metadata = Path(args.metadata)
     audio_root = Path(args.audio_root)
+    flat_audio_dir = Path(args.flat_audio_dir) if args.flat_audio_dir else None
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -26,13 +31,16 @@ def main() -> None:
         if len(parts) < 3:
             continue
         rel_path, transcript, speaker_id = parts[:3]
+        audio_path = audio_root / rel_path
+        if flat_audio_dir is not None and not audio_path.exists():
+            audio_path = flat_audio_dir / Path(rel_path).name
         rows.append(
             {
                 "id": Path(rel_path).stem,
                 "label": "__negative__",
                 "text": transcript,
                 "speaker_id": speaker_id,
-                "audio_path": str(audio_root / rel_path),
+                "audio_path": str(audio_path),
                 "source": "korean_style_tts_metadata",
             }
         )

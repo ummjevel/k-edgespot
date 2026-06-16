@@ -122,6 +122,22 @@
   - [x] `docs/false_accepts_distill_hard_tau4_k10_far1.jsonl`.
   - [x] Original `괴롭다`, `두렵다`, and `뼈아프다` top false accepts were removed.
   - [x] `그립다` still appears once with another sample.
+- [x] Expanded command-like hard-negative seed prompts with new false accept patterns:
+  - [x] Added `즐겁다`, `아이 추운데`, `추운데`, `뭐 하는 짓입니까`,
+        `불길하다`, `젊다`, `죽었다`, `위험하다`, and `공부했습니다`.
+- [x] Built a real-recording Korean negative domain-test set:
+  - [x] `data/manifests/real_recording_negative_5k.jsonl`.
+  - [x] 5,000 real-recording Korean negative rows.
+  - [x] Source wav files are 24 kHz and validated successfully.
+  - [x] `data/manifests/splits/test_real_negative_5k.jsonl`.
+  - [x] 5,384 query rows: 384 original test positives + 5,000 real negatives.
+- [x] Evaluated the best hard-negative distilled checkpoint against real-recording Korean negatives:
+  - [x] Checkpoint: `runs/edgespot-ko-distill-hard-tau4/best.pt`.
+  - [x] Output: `runs/edgespot-ko-distill-hard-tau4/prototype_eval_realneg5k_k10.json`.
+  - [x] k=10 AUC: 0.9222.
+  - [x] Recall@FAR0.1%: 0.1354.
+  - [x] Recall@FAR1%: 0.6276.
+  - [x] Recall@FAR5%: 0.8229.
 
 ## Paper Items Implemented
 
@@ -143,8 +159,9 @@
 
 ## Remaining Work
 
-- [ ] Expand command-like hard negatives with the new false accept patterns.
-- [ ] Evaluate the best distilled checkpoint against real-recording Korean negative/domain-test data.
+- [ ] Inspect false accepts from the real-recording Korean negative domain-test.
+- [ ] Synthesize another hard-negative batch from the expanded seed list.
+- [ ] Retrain or fine-tune with the expanded hard-negative batch.
 - [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.
 - [ ] Add MAC counting to compare EdgeSpot-1/2/3/4 against the paper table.
 - [ ] Add a BC-ResNet baseline trained with the same KD+SCAF protocol.
@@ -154,7 +171,6 @@
   - [ ] TTS-only train and TTS validation.
   - [ ] Real-recording negative validation.
   - [ ] Korean few-shot command enrollment trials.
-- [ ] Add Korean hard negatives and command-like confuser words.
 - [ ] Add final model export path for on-device inference.
 - [ ] Add quantization/export benchmark for actual on-device target constraints.
 
@@ -172,6 +188,9 @@
   to 16 kHz at load time and crops/pads each waveform to 1 second. This avoids
   creating another full normalized audio copy, keeping CPU memory usage lower at
   the cost of per-epoch resampling work.
+- Real-recording Korean negative wav files from the style/emotion speech dataset
+  are also 24 kHz. They are used without creating another normalized audio copy;
+  the loader resamples them in the same path as generated TTS audio.
 - The current SCAF training script is intentionally conservative for CPU memory:
   it streams audio from disk, uses `batch_size=512`, and uses two DataLoader
   workers per model by default.
