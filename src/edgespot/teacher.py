@@ -7,10 +7,11 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torchaudio
 from tqdm import tqdm
 from transformers import AutoFeatureExtractor, AutoModel
 
-from edgespot.audio import load_wav
+from edgespot.data import _crop_audio, _read_audio
 from edgespot.teacher_model import Wav2VecTeacher
 
 
@@ -107,7 +108,7 @@ def _iter_batches(rows: list[dict], batch_size: int) -> tqdm:
 
 
 def _batch_inputs(batch: list[dict], extractor: AutoFeatureExtractor, device: str) -> dict:
-    wavs = [load_wav(row["audio_path"], extractor.sampling_rate) for row in batch]
+    wavs = [_load_manifest_wav(row, extractor.sampling_rate) for row in batch]
     inputs = extractor(
         wavs,
         sampling_rate=extractor.sampling_rate,
@@ -115,6 +116,17 @@ def _batch_inputs(batch: list[dict], extractor: AutoFeatureExtractor, device: st
         padding=True,
     )
     return {key: value.to(device) for key, value in inputs.items()}
+
+
+def _load_manifest_wav(row: dict, target_sr: int) -> np.ndarray:
+    wav, sr = _read_audio(row)
+    wav = _crop_audio(wav, sr, row)
+    if wav.ndim > 1:
+        wav = wav.mean(axis=1)
+    tensor = torch.from_numpy(wav)
+    if sr != target_sr:
+        tensor = torchaudio.functional.resample(tensor, sr, target_sr)
+    return tensor.numpy()
 
 
 def _get_feature_mask(hidden: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:

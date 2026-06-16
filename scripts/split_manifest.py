@@ -19,11 +19,19 @@ def main() -> None:
         default="voice_prompt",
         help="Keep rows sharing this key in the same split when present.",
     )
+    parser.add_argument(
+        "--global-groups",
+        action="store_true",
+        help="Keep group-key rows together even when their labels differ.",
+    )
     args = parser.parse_args()
 
     rows = _read_jsonl(Path(args.manifest))
     rng = random.Random(args.seed)
-    grouped = _group_by_label_and_key(rows, args.group_key)
+    if args.global_groups:
+        grouped = _group_globally_then_label(rows, args.group_key)
+    else:
+        grouped = _group_by_label_and_key(rows, args.group_key)
 
     splits = {"train": [], "val": [], "test": []}
     for label, groups in grouped.items():
@@ -78,6 +86,27 @@ def _group_by_label_and_key(rows: list[dict], key: str) -> dict[str, list[list[d
         group_value = str(row.get(key) or row.get("speaker_id") or row.get("id") or idx)
         by_label_key[row["label"]][group_value].append(row)
     return {label: list(groups.values()) for label, groups in by_label_key.items()}
+
+
+def _group_globally_then_label(rows: list[dict], key: str) -> dict[str, list[list[dict]]]:
+    global_groups: dict[str, list[dict]] = defaultdict(list)
+    for idx, row in enumerate(rows):
+        group_value = str(row.get(key) or row.get("speaker_id") or row.get("id") or idx)
+        global_groups[group_value].append(row)
+
+    by_label: dict[str, list[list[dict]]] = defaultdict(list)
+    for group_rows in global_groups.values():
+        label = _primary_label(group_rows)
+        by_label[label].append(group_rows)
+    return dict(by_label)
+
+
+def _primary_label(rows: list[dict]) -> str:
+    labels = [row["label"] for row in rows]
+    non_negative = [label for label in labels if label != "__negative__"]
+    if non_negative:
+        return sorted(non_negative)[0]
+    return "__negative__"
 
 
 def _label_counts(rows: list[dict]) -> dict[str, int]:

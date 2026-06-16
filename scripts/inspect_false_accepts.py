@@ -51,6 +51,11 @@ def main() -> None:
     ]
     false_accepts.sort(key=lambda row: row["score"], reverse=True)
     false_accepts = false_accepts[: args.top_n]
+    false_rejects = [
+        row for row in scored if row["label"] != "__negative__" and row["score"] < threshold
+    ]
+    false_rejects.sort(key=lambda row: row["score"])
+    false_rejects = false_rejects[: args.top_n]
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -69,11 +74,21 @@ def main() -> None:
                     if row["label"] == "__negative__" and row["score"] >= threshold
                 )
             ),
+            "num_false_rejects_at_threshold": int(
+                sum(
+                    1
+                    for row in scored
+                    if row["label"] != "__negative__" and row["score"] < threshold
+                )
+            ),
         }
         handle.write(json.dumps({"type": "summary", **summary}, ensure_ascii=False) + "\n")
         for row in false_accepts:
             row = {key: value for key, value in row.items() if key != "embedding"}
             handle.write(json.dumps({"type": "false_accept", **row}, ensure_ascii=False) + "\n")
+        for row in false_rejects:
+            row = {key: value for key, value in row.items() if key != "embedding"}
+            handle.write(json.dumps({"type": "false_reject", **row}, ensure_ascii=False) + "\n")
     print(f"wrote {out}")
 
 
@@ -94,12 +109,20 @@ def _embed(
         labels = list(batch["label_name"])
         paths = list(batch["audio_path"])
         for idx in range(embeddings.shape[0]):
+            item = dataset.items[offset + idx]
             rows.append(
                 {
                     "embedding": embeddings[idx],
                     "label": labels[idx],
                     "audio_path": paths[idx],
                     "index": offset + idx,
+                    "text": item.get("text"),
+                    "command_domain": item.get("command_domain"),
+                    "command_subdomain": item.get("command_subdomain"),
+                    "variant": item.get("variant"),
+                    "speaker_id": item.get("speaker_id"),
+                    "noise_type": item.get("noise_type"),
+                    "aihub_mapping_rule": item.get("aihub_mapping_rule"),
                 }
             )
         offset += embeddings.shape[0]

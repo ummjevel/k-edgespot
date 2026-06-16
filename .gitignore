@@ -5,6 +5,8 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 data/audio/
+data/*.zip*
+data/aihub_71405_extracted/
 data/manifests/*.jsonl
 data/manifests/*.done.jsonl
 data/manifests/*.json
@@ -16,3 +18,4 @@ models/*
 !models/.gitkeep
 *.pt
 *.ckpt
+docs/**/audio/

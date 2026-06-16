@@ -138,6 +138,209 @@
   - [x] Recall@FAR0.1%: 0.1354.
   - [x] Recall@FAR1%: 0.6276.
   - [x] Recall@FAR5%: 0.8229.
+- [x] Extracted real-recording domain-test false accepts:
+  - [x] `docs/false_accepts_distill_hard_tau4_realneg5k_k10_far1.jsonl`.
+  - [x] FAR=1% threshold produced 50 false accepts from 5,000 real negatives.
+  - [x] Top confusers include short state/adjective utterances and command-like phrases.
+- [x] Prepared AIHub 71405 validation seed download configuration:
+  - [x] `configs/aihub_71405_validation_seed_files.txt`.
+  - [x] `scripts/download_aihub_71405_subset.sh`.
+  - [x] Downloader reads `/data/datasets/voice/.secrets/aihub_api_key` without exposing the key.
+- [x] Downloaded the selected AIHub 71405 validation seed subset:
+  - [x] Output root: `/data/datasets/voice/aihub_71405/validation_seed`.
+  - [x] Downloaded size: 11 GB.
+  - [x] Selected source archives: restaurant far, cafe near, home near, hospital near,
+        small-car low-speed, mid/large-car high-speed, car window-open low-speed,
+        and car music low-speed.
+  - [x] Source wav entries in selected archives: 131,180.
+  - [x] Label JSON entries in selected archives: 65,590.
+  - [x] Google Speech Commands v2 archive size: 2.3 GB.
+  - [x] Google Speech Commands v2 wav entries: 105,835.
+  - [x] MSWC local archive size: 35 GB.
+  - [x] MSWC English split entries:
+    - [x] `en_splits.csv`: 6,624,344 rows.
+    - [x] `en_train.csv`: 5,266,727 rows.
+    - [x] `en_dev.csv`: 678,737 rows.
+    - [x] `en_test.csv`: 678,882 rows.
+- [x] Added manifest speech-crop support:
+  - [x] Dataset rows can now carry `start_sec` and `end_sec`.
+  - [x] The loader crops the speech region before resampling/padding to 1 second.
+  - [x] The loader can read `zip_path` + `zip_member` rows directly for inspection/evaluation.
+  - [x] The loader now prefers direct `audio_path` when present, then falls back to zip rows.
+- [x] Built AIHub 71405 validation seed manifests:
+  - [x] Parser: `scripts/build_aihub_71405_manifest.py`.
+  - [x] Full manifest: `data/manifests/aihub_71405_validation_seed.jsonl`.
+  - [x] Full rows: 131,180.
+  - [x] S/N variants: 65,590 each.
+  - [x] Short command-like rows (`speechLength <= 2s`): 8,518.
+  - [x] Long hard-negative rows: 122,662.
+  - [x] Target-keyword short rows: 984.
+  - [x] Added reusable manifest filter: `scripts/filter_manifest.py`.
+- [x] Extracted the selected AIHub 71405 validation seed archives for faster training/evaluation:
+  - [x] Extracted root: `/data/datasets/voice/aihub_71405/validation_seed_extracted`.
+  - [x] Extracted wav files: 131,180.
+  - [x] Extracted label JSON files: 65,590.
+  - [x] Extracted size: 14 GB.
+  - [x] Added `--extracted-root` support to `scripts/build_aihub_71405_manifest.py`.
+  - [x] Built extracted-path manifest: `data/manifests/aihub_71405_validation_seed.extracted.jsonl`.
+  - [x] Extracted-path rows: 131,180.
+  - [x] Missing extracted wav rows: 0.
+  - [x] Rebuilt extracted-path short, long, and target-keyword manifests.
+  - [x] Verified `ManifestDataset` reads extracted AIHub wav paths successfully.
+- [x] Built conservative AIHub target-keyword label mapping:
+  - [x] Script: `scripts/map_aihub_71405_labels.py`.
+  - [x] Mapped manifest: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.mapped.jsonl`.
+  - [x] Positives manifest: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.positives.jsonl`.
+  - [x] Hard-negative manifest: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.hard_negatives.jsonl`.
+  - [x] Mapping summary: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.mapping_summary.json`.
+  - [x] Label counts: 312 positives and 672 hard negatives.
+  - [x] Positive labels: `music_play`, `weather`, `lights_off`, `lights_on`,
+        `alarm_set`, `music_stop`, `next_track`, and `timer_start`.
+- [x] Ran AIHub mapped target-keyword domain-test evaluation:
+  - [x] Checkpoint: `runs/edgespot-ko-distill-hard-tau4/best.pt`.
+  - [x] Support manifest: `data/manifests/splits/train_with_hard_negatives.jsonl`.
+  - [x] Query manifest: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.mapped.jsonl`.
+  - [x] Slurm job: `3284`.
+  - [x] Output: `runs/edgespot-ko-distill-hard-tau4/prototype_eval_aihub71405_target_keyword_k10.json`.
+  - [x] k=10 AUC: 0.4969.
+  - [x] Recall@FAR0.1%: 0.0096.
+  - [x] Recall@FAR1%: 0.0192.
+  - [x] Recall@FAR5%: 0.0705.
+- [x] Built AIHub in-domain support/query manifests:
+  - [x] Script: `scripts/build_prototype_split.py`.
+  - [x] k=1 support: `data/manifests/splits/aihub71405_target_keyword_support_k1.jsonl`.
+  - [x] k=1 query: `data/manifests/splits/aihub71405_target_keyword_query_k1.jsonl`.
+  - [x] k=5 support: `data/manifests/splits/aihub71405_target_keyword_support_k5.jsonl`.
+  - [x] k=5 query: `data/manifests/splits/aihub71405_target_keyword_query_k5.jsonl`.
+- [x] Ran AIHub in-domain prototype evaluations:
+  - [x] k=1 output: `runs/edgespot-ko-distill-hard-tau4/prototype_eval_aihub71405_indomain_k1.json`.
+  - [x] k=1 AUC: 0.4846.
+  - [x] k=1 Recall@FAR1%: 0.0066.
+  - [x] k=5 output: `runs/edgespot-ko-distill-hard-tau4/prototype_eval_aihub71405_indomain_k5.json`.
+  - [x] k=5 AUC: 0.4746.
+  - [x] k=5 Recall@FAR1%: 0.0109.
+- [x] Inspected AIHub in-domain FAR=1% errors:
+  - [x] Output: `docs/false_accepts_aihub71405_indomain_k5_far1.jsonl`.
+  - [x] False accepts at threshold: 7.
+  - [x] False rejects at threshold: 272.
+  - [x] All top false accepts matched the `lights_on` prototype.
+- [x] Built AIHub-augmented fine-tuning manifests:
+  - [x] Rebuilt mapped AIHub target-keyword rows with `aihub_pair_id` for S/N pair grouping.
+  - [x] Verified AIHub S/N pair leakage across train/val/test: 0 leaked pairs.
+  - [x] AIHub-only split root: `data/manifests/splits/aihub71405_mapped`.
+  - [x] Augmented train: `data/manifests/splits/train_with_hard_negatives_aihub_mapped.jsonl`.
+  - [x] Augmented train rows: 12,910.
+  - [x] Augmented validation: `data/manifests/splits/val_aihub_mapped.jsonl`.
+  - [x] Augmented validation rows: 1,321.
+  - [x] Augmented test: `data/manifests/splits/test_aihub_mapped.jsonl`.
+  - [x] Augmented test rows: 1,745.
+  - [x] Augmented all-split manifest: `data/manifests/splits/all_with_hard_negatives_aihub_mapped.jsonl`.
+  - [x] Augmented all-split rows: 15,976.
+  - [x] Verified augmented train/validation label lists match.
+- [x] Exported XLS-R teacher embeddings for AIHub-augmented manifests:
+  - [x] Updated teacher export to apply manifest `start_sec`/`end_sec` speech crops.
+  - [x] Slurm job: `3287`.
+  - [x] Output target: `data/teacher/xls-r-300m_teacher64_all_hard_aihub_mapped.npz`.
+  - [x] Confirmed export completion.
+- [x] Ran AIHub-augmented tau4 distillation retrain:
+  - [x] Slurm job: `3288`.
+  - [x] Dependency: `afterok:3287`.
+  - [x] Train manifest: `data/manifests/splits/train_with_hard_negatives_aihub_mapped.jsonl`.
+  - [x] Validation manifest: `data/manifests/splits/val_aihub_mapped.jsonl`.
+  - [x] Teacher embeddings: `data/teacher/xls-r-300m_teacher64_all_hard_aihub_mapped.npz`.
+  - [x] Run target: `runs/edgespot-ko-distill-hard-aihub-tau4`.
+  - [x] Completed 40 epochs.
+  - [x] Best validation epoch: 35.
+  - [x] Training plateaued around epochs 25-40.
+- [x] Ran AIHub-augmented tau4 evaluations:
+  - [x] Augmented test eval job: `3289`, dependency `afterok:3288`.
+  - [x] Augmented test output: `runs/edgespot-ko-distill-hard-aihub-tau4/prototype_eval_augmented_test_k10.json`.
+  - [x] Augmented test AUC: 0.9118.
+  - [x] Augmented test Recall@FAR1%: 0.7406.
+  - [x] AIHub target-keyword eval job: `3290`, dependency `afterok:3288`.
+  - [x] AIHub target-keyword output: `runs/edgespot-ko-distill-hard-aihub-tau4/prototype_eval_aihub71405_target_keyword_k10.json`.
+  - [x] AIHub target-keyword AUC: 0.5445.
+  - [x] AIHub target-keyword Recall@FAR1%: 0.0481.
+  - [x] Reviewed evaluation metrics.
+- [x] Built fixed benchmark result report:
+  - [x] Script: `scripts/write_benchmark_report.py`.
+  - [x] Output: `docs/benchmark_results.md`.
+  - [x] Benchmarks include TTS held-out, real-recording negative domain-test,
+        AIHub mapped held-out, and AIHub target-keyword full scan.
+- [x] Prepared post-AIHub AIHub error review for listening:
+  - [x] Slurm inspect job: `3291`.
+  - [x] Error JSONL: `docs/false_accepts_aihub_augmented_target_keyword_k10_far1.jsonl`.
+  - [x] Error summary: `docs/aihub_post_augmented_error_review.md`.
+  - [x] Audio review folder: `docs/audio_review_aihub_augmented_target_keyword_far1/audio`.
+  - [x] Review TSV: `docs/audio_review_aihub_augmented_target_keyword_far1/review.tsv`.
+  - [x] FAR=1% false accepts: 7.
+  - [x] FAR=1% false rejects: 297.
+- [x] Applied post-AIHub audio review decisions:
+  - [x] Review decisions: 53 `keep_negative`, 31 `bad_audio`, 2 `keep_positive`, and 1 `map_positive`.
+  - [x] Reviewed manifest: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.reviewed.jsonl`.
+  - [x] Reviewed summary: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.reviewed_summary.json`.
+  - [x] Reviewed train manifest: `data/manifests/splits/train_with_hard_negatives_aihub_reviewed.jsonl`.
+  - [x] Reviewed validation manifest: `data/manifests/splits/val_aihub_reviewed.jsonl`.
+  - [x] Reviewed test manifest: `data/manifests/splits/test_aihub_reviewed.jsonl`.
+  - [x] Verified reviewed train/validation label lists match.
+  - [x] Verified reviewed AIHub S/N pair leakage across train/val/test: 0 leaked pairs.
+- [x] Added experimental EdgeSpot-minGRU streaming encoder skeleton:
+  - [x] File: `src/edgespot/model_mingru.py`.
+  - [x] Reuses the repo's trainable PCEN frontend and `[B, 1, 40, T]` input contract.
+  - [x] Replaces the temporal attention path with causal minGRU mixer blocks.
+  - [x] Adds left-padded causal Conv1D head instead of symmetric padding.
+  - [x] Outputs normalized 64-D embeddings.
+  - [x] Verification script: `scripts/check_mingru.py`.
+  - [x] minGRU parallel-vs-step max absolute difference: `5.186e-06`.
+  - [x] mixer parallel-vs-stream max absolute difference: `1.597e-05`.
+  - [x] causal Conv1D prefix check max absolute difference: `0.000e+00`.
+  - [x] Forward sanity check: `(2, 64)` embedding, unit norm, `100.7K` parameters.
+- [x] Submitted reviewed-split retraining pipeline:
+  - [x] Teacher embedding export job: `3292`.
+  - [x] Reviewed tau4 distillation training job: `3293`, dependency `afterok:3292`.
+  - [x] Reviewed augmented held-out evaluation job: `3294`, dependency `afterok:3293`.
+  - [x] Reviewed full AIHub target scan evaluation job: `3295`, dependency `afterok:3293`.
+  - [x] Added reviewed pipeline Slurm wrappers under `slurm/`.
+- [x] Completed reviewed-split retraining pipeline:
+  - [x] Teacher embeddings: `data/teacher/xls-r-300m_teacher64_all_hard_aihub_reviewed.npz`.
+  - [x] Checkpoint: `runs/edgespot-ko-distill-hard-aihub-reviewed-tau4/best.pt`.
+  - [x] Training completed 40 epochs.
+  - [x] Training loss decreased from `0.0241` to `0.0041`.
+  - [x] Best validation loss was reached around epochs 32, 34, 36, 39, and 40.
+  - [x] Reviewed held-out eval output: `runs/edgespot-ko-distill-hard-aihub-reviewed-tau4/prototype_eval_augmented_reviewed_test_k10.json`.
+  - [x] Reviewed held-out AUC: `0.7072`.
+  - [x] Reviewed held-out Recall@FAR1%: `0.4821`.
+  - [x] Reviewed full AIHub target scan output: `runs/edgespot-ko-distill-hard-aihub-reviewed-tau4/prototype_eval_aihub71405_target_keyword_reviewed_k10.json`.
+  - [x] Reviewed full AIHub target scan AUC: `0.5330`.
+  - [x] Reviewed full AIHub target scan Recall@FAR1%: `0.0255`.
+- [x] Prepared conservative audio-review ablation:
+  - [x] Added `scripts/apply_audio_review.py --mode conservative`.
+  - [x] Conservative rule: remove `bad_audio`, apply `map_positive`, apply false-accept `keep_negative`, and ignore false-reject `keep_negative` relabeling.
+  - [x] Manifest: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.reviewed_conservative.jsonl`.
+  - [x] Summary: `data/manifests/aihub_71405_validation_seed.extracted.target_keyword_short.reviewed_conservative_summary.json`.
+  - [x] Rows: 953 after removing 31 bad-audio rows.
+  - [x] Ignored false-reject negative relabels: 47.
+  - [x] Conservative train manifest: `data/manifests/splits/train_with_hard_negatives_aihub_reviewed_conservative.jsonl`.
+  - [x] Conservative validation manifest: `data/manifests/splits/val_aihub_reviewed_conservative.jsonl`.
+  - [x] Conservative test manifest: `data/manifests/splits/test_aihub_reviewed_conservative.jsonl`.
+  - [x] Conservative all manifest: `data/manifests/splits/all_with_hard_negatives_aihub_reviewed_conservative.jsonl`.
+  - [x] Verified train/validation/test label lists match.
+  - [x] Verified AIHub S/N pair leakage across train/val/test: 0 leaked pairs.
+  - [x] Verified existing reviewed teacher embeddings cover the conservative manifest: 0 missing rows.
+- [x] Submitted conservative audio-review ablation:
+  - [x] Conservative tau4 distillation training job: `3296`.
+  - [x] Conservative held-out evaluation job: `3297`, dependency `afterok:3296`.
+  - [x] Conservative full AIHub target scan job: `3298`, dependency `afterok:3296`.
+- [x] Completed conservative audio-review ablation:
+  - [x] Checkpoint: `runs/edgespot-ko-distill-hard-aihub-conservative-tau4/best.pt`.
+  - [x] Training completed 40 epochs.
+  - [x] Training loss decreased from `0.0274` to `0.0042`.
+  - [x] Conservative held-out eval output: `runs/edgespot-ko-distill-hard-aihub-conservative-tau4/prototype_eval_augmented_conservative_test_k10.json`.
+  - [x] Conservative held-out AUC: `0.7376`.
+  - [x] Conservative held-out Recall@FAR1%: `0.4586`.
+  - [x] Conservative full AIHub target scan output: `runs/edgespot-ko-distill-hard-aihub-conservative-tau4/prototype_eval_aihub71405_target_keyword_conservative_k10.json`.
+  - [x] Conservative full AIHub target scan AUC: `0.4879`.
+  - [x] Conservative full AIHub target scan Recall@FAR1%: `0.0142`.
 
 ## Paper Items Implemented
 
@@ -156,10 +359,34 @@
 - [x] 40-epoch default training.
 - [x] Prototype-based K-shot evaluation.
 - [x] External train/validation split support.
+- [x] Experimental streaming minGRU replacement path for temporal attention.
 
 ## Remaining Work
 
-- [ ] Inspect false accepts from the real-recording Korean negative domain-test.
+- [x] Review AIHub target-keyword short rows and define mapping rules:
+  - [x] Map clear positives to existing labels such as `weather`, `music_play`,
+        `music_stop`, `lights_on`, `lights_off`, and `alarm_set`.
+  - [x] Keep near-miss or semantically different commands as hard negatives.
+  - [x] Keep S and N variants together for the first domain-test pass.
+- [x] Finish AIHub mapped target-keyword domain-test evaluation and review metrics.
+- [x] Build AIHub in-domain support/query manifests to separate support-domain mismatch
+      from embedding-domain mismatch.
+- [x] Inspect AIHub domain-test false accepts and false rejects.
+- [x] Build AIHub-derived train/val/test manifests for fine-tuning.
+- [x] Export XLS-R teacher embeddings for AIHub-augmented train/val/test manifests.
+- [x] Fine-tune or retrain EdgeSpot with AIHub positives and hard negatives included.
+- [x] Evaluate AIHub-augmented tau4 checkpoint and compare with pre-AIHub checkpoint.
+- [x] Review post-AIHub AIHub error audio and mark `review.tsv` decisions.
+- [x] Confirm reviewed teacher embedding export job `3292` completed.
+- [x] Confirm reviewed tau4 retrain job `3293` completed.
+- [x] Review metrics from reviewed held-out job `3294`.
+- [x] Review metrics from reviewed full AIHub target scan job `3295`.
+- [ ] Wire `EdgeSpotMinGRU` into the training CLI as an optional encoder.
+- [ ] Train and evaluate the experimental minGRU encoder against the current tau4 attention baseline.
+- [ ] Inspect false accepts from the real-recording Korean negative domain-test and fold the strongest text patterns into hard-negative generation.
+- [x] Confirm conservative tau4 ablation job `3296` completed.
+- [x] Review metrics from conservative held-out job `3297`.
+- [x] Review metrics from conservative full AIHub target scan job `3298`.
 - [ ] Synthesize another hard-negative batch from the expanded seed list.
 - [ ] Retrain or fine-tune with the expanded hard-negative batch.
 - [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.

@@ -1,0 +1,27 @@
+# AIHub 71405: "명령어 인식을 위한 소음 환경 데이터"
+# Initial validation seed subset.
+#
+# Selection policy:
+# - Keep source audio under roughly 8 GB total.
+# - Prefer diverse noisy KWS-like environments.
+# - Include matching labels for every selected source archive.
+#
+# Columns:
+# split,type,environment,distance_or_condition,size,file_key,filename
+
+validation,source,restaurant,far,1.42GB,512966,VS_01.다화자_소음_환경_001.식당_01.원거리.zip
+validation,label,restaurant,far,5.63MB,512996,VL_01.다화자_소음_환경_001.식당_01.원거리.zip
+validation,source,cafe,near,2.37GB,512969,VS_01.다화자_소음_환경_002.카페_02.근거리.zip
+validation,label,cafe,near,10.03MB,512999,VL_01.다화자_소음_환경_002.카페_02.근거리.zip
+validation,source,home,near,3.61GB,512971,VS_01.다화자_소음_환경_003.가정환경_02.근거리.zip
+validation,label,home,near,18.28MB,513001,VL_01.다화자_소음_환경_003.가정환경_02.근거리.zip
+validation,source,hospital,near,1.90GB,512985,VS_01.다화자_소음_환경_010.병원_02.근거리.zip
+validation,label,hospital,near,8.54MB,513015,VL_01.다화자_소음_환경_010.병원_02.근거리.zip
+validation,source,car-small,low-speed,328.81MB,512986,VS_02.차량_소음_환경_002.차종-소형_01.저속.zip
+validation,label,car-small,low-speed,1.44MB,513016,VL_02.차량_소음_환경_002.차종-소형_01.저속.zip
+validation,source,car-midlarge,high-speed,23.01MB,512987,VS_02.차량_소음_환경_003.차종-중대형_03.고속.zip
+validation,label,car-midlarge,high-speed,121.78KB,513017,VL_02.차량_소음_환경_003.차종-중대형_03.고속.zip
+validation,source,car-window-open,low-speed,437.36MB,512988,VS_02.차량_소음_환경_005.창문-열림_01.저속.zip
+validation,label,car-window-open,low-speed,1.68MB,513018,VL_02.차량_소음_환경_005.창문-열림_01.저속.zip
+validation,source,car-music,low-speed,333.17MB,512992,VS_02.차량_소음_환경_008.멀티미디어-음악_01.저속.zip
+validation,label,car-music,low-speed,1.43MB,513022,VL_02.차량_소음_환경_008.멀티미디어-음악_01.저속.zip
