@@ -7,13 +7,13 @@ Generated from prototype evaluation JSON files under `runs/`.
 | Rank | Family | Tau | K-shot | AUC | Recall@FAR0.1% | Recall@FAR1% | Recall@FAR5% |
 |---:|---|---:|---:|---:|---:|---:|---:|
 | 1 | distill | 4 | 10 | 0.9325 | 0.0938 | 0.4948 | 0.7917 |
-| 2 | scaf | 2 | 10 | 0.8663 | 0.0156 | 0.1458 | 0.4036 |
-| 3 | scaf | 2 | 5 | 0.8295 | 0.0130 | 0.0990 | 0.3177 |
-| 4 | distill | 4 | 5 | 0.7857 | 0.0365 | 0.4297 | 0.6536 |
-| 5 | distill | 3 | 10 | 0.7412 | 0.0078 | 0.3229 | 0.6016 |
-| 6 | scaf | 2 | 1 | 0.7006 | 0.0469 | 0.1068 | 0.2057 |
-| 7 | scaf | 1 | 1 | 0.6476 | 0.0104 | 0.0703 | 0.1641 |
-| 8 | distill | 3 | 5 | 0.6390 | 0.0078 | 0.1432 | 0.5391 |
+| 2 | distill-hard | 4 | 10 | 0.9191 | 0.1510 | 0.5911 | 0.8177 |
+| 3 | scaf | 2 | 10 | 0.8663 | 0.0156 | 0.1458 | 0.4036 |
+| 4 | scaf | 2 | 5 | 0.8295 | 0.0130 | 0.0990 | 0.3177 |
+| 5 | distill | 4 | 5 | 0.7857 | 0.0365 | 0.4297 | 0.6536 |
+| 6 | distill-hard | 4 | 5 | 0.7610 | 0.0964 | 0.5495 | 0.6615 |
+| 7 | distill | 3 | 10 | 0.7412 | 0.0078 | 0.3229 | 0.6016 |
+| 8 | scaf | 2 | 1 | 0.7006 | 0.0469 | 0.1068 | 0.2057 |
 
 ## All Runs
 
@@ -31,6 +31,9 @@ Generated from prototype evaluation JSON files under `runs/`.
 | distill | 4 | 1 | 0.1671 | 0.0078 | 0.0104 | 0.0286 |
 | distill | 4 | 5 | 0.7857 | 0.0365 | 0.4297 | 0.6536 |
 | distill | 4 | 10 | 0.9325 | 0.0938 | 0.4948 | 0.7917 |
+| distill-hard | 4 | 1 | 0.2149 | 0.0208 | 0.0625 | 0.0859 |
+| distill-hard | 4 | 5 | 0.7610 | 0.0964 | 0.5495 | 0.6615 |
+| distill-hard | 4 | 10 | 0.9191 | 0.1510 | 0.5911 | 0.8177 |
 | scaf | 1 | 1 | 0.6476 | 0.0104 | 0.0703 | 0.1641 |
 | scaf | 1 | 5 | 0.5368 | 0.0000 | 0.0156 | 0.0599 |
 | scaf | 1 | 10 | 0.5815 | 0.0052 | 0.0365 | 0.0833 |
@@ -48,5 +51,5 @@ Generated from prototype evaluation JSON files under `runs/`.
 
 - The best SCAF-only baseline is `scaf`, tau 2, 10-shot.
 - The best distilled model is `distill`, tau 4, 10-shot.
-- Distillation improves this TTS split substantially, but the evaluation is still TTS-domain only.
-- Next validation should use hard negatives and real-recording negative/domain-test data.
+- The hard-negative tau 4 run lowers AUC slightly but improves recall at strict FARs.
+- Next validation should use real-recording negative/domain-test data and streaming-style metrics.

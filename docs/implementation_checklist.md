@@ -114,9 +114,14 @@
 - [x] Submitted hard-negative tau 4 distill training:
   - [x] Job `3280`.
   - [x] Run target `runs/edgespot-ko-distill-hard-tau4`.
-  - [x] Epoch 1 validation passed.
+  - [x] Completed 40 epochs.
 - [x] Submitted dependent hard-negative tau 4 prototype evaluation:
   - [x] Job `3281`, dependency `afterok:3280`.
+  - [x] Completed 1-shot, 5-shot, and 10-shot evaluation.
+- [x] Reviewed top false accepts after hard-negative training:
+  - [x] `docs/false_accepts_distill_hard_tau4_k10_far1.jsonl`.
+  - [x] Original `괴롭다`, `두렵다`, and `뼈아프다` top false accepts were removed.
+  - [x] `그립다` still appears once with another sample.
 
 ## Paper Items Implemented
 
@@ -138,9 +143,7 @@
 
 ## Remaining Work
 
-- [ ] Wait for hard-negative tau 4 distill job `3280`.
-- [ ] Review dependent prototype eval job `3281`.
-- [ ] Review top false accepts after hard-negative training and expand command-like confusers.
+- [ ] Expand command-like hard negatives with the new false accept patterns.
 - [ ] Evaluate the best distilled checkpoint against real-recording Korean negative/domain-test data.
 - [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.
 - [ ] Add MAC counting to compare EdgeSpot-1/2/3/4 against the paper table.

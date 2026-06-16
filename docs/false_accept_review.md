@@ -21,3 +21,27 @@ Current seed file:
 ```text
 configs/korean_hard_negatives.txt
 ```
+
+## After Hard-Negative Training
+
+Compared file:
+
+```text
+docs/false_accepts_distill_hard_tau4_k10_far1.jsonl
+```
+
+At k=10 and FAR=1%, the number of false accepts at threshold remains 13 because
+the threshold is selected from the negative score quantile. The important change
+is which negatives are now above threshold.
+
+| Seed text | Original top false accept | After hard-negative training |
+|---|---|---|
+| 괴롭다 | Present | Removed from top FAR=1% false accepts |
+| 두렵다 | Present | Removed from top FAR=1% false accepts |
+| 뼈아프다 | Present | Removed from top FAR=1% false accepts |
+| 그립다 | Present | Still appears once with another sample |
+
+The new top false accepts are no longer dominated by the original short state
+utterances. Remaining examples include other short or command-like phrases such
+as `즐겁다` and `아이 추운데.` plus longer sentences whose acoustic rhythm still
+matches command prototypes.
