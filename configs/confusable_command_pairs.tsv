@@ -1,0 +1,6 @@
+# Label pairs with short command-like contrasts.
+lights_on	lights_off
+music_play	music_stop
+next_track	previous_track
+volume_up	volume_down
+timer_start	timer_stop

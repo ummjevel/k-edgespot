@@ -11,7 +11,11 @@ from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from edgespot.augment import apply_specaugment
+from edgespot.augment import (
+    apply_device_like_augmentation,
+    apply_specaugment,
+    load_device_like_profile,
+)
 from edgespot.data import ManifestDataset
 from edgespot.losses import SubCenterArcFaceLoss, cosine_distillation_loss, mse_distillation_loss
 from edgespot.model import EdgeSpot
@@ -68,6 +72,60 @@ def main() -> None:
     parser.add_argument("--distill-loss", choices=["mse", "cosine"], default="mse")
     parser.add_argument("--distill-weight", type=float, default=0.0)
     parser.add_argument("--scaf-weight", type=float, default=5e-5)
+    parser.add_argument(
+        "--negative-prototype-margin-weight",
+        type=float,
+        default=0.0,
+        help="Penalize negative embeddings that are too close to positive batch prototypes.",
+    )
+    parser.add_argument(
+        "--negative-prototype-margin",
+        type=float,
+        default=0.35,
+        help="Maximum allowed cosine similarity from a negative to a positive prototype.",
+    )
+    parser.add_argument(
+        "--confusable-pairs",
+        help="Whitespace-separated label pairs whose batch prototypes should be separated.",
+    )
+    parser.add_argument(
+        "--confusable-margin-weight",
+        type=float,
+        default=0.0,
+        help="Penalize confusable label-pair prototypes that are too close in the batch.",
+    )
+    parser.add_argument(
+        "--confusable-margin",
+        type=float,
+        default=0.25,
+        help="Maximum allowed cosine similarity between confusable pair prototypes.",
+    )
+    parser.add_argument(
+        "--negative-antisaturation-weight",
+        type=float,
+        default=0.0,
+        help="Focus extra penalty on the highest negative-to-positive prototype similarities.",
+    )
+    parser.add_argument(
+        "--negative-antisaturation-margin",
+        type=float,
+        default=0.8,
+        help="Maximum allowed top hard-negative cosine similarity before extra penalty.",
+    )
+    parser.add_argument(
+        "--negative-antisaturation-top-k",
+        type=int,
+        default=16,
+        help="Number of highest-scoring negatives to include in the anti-saturation loss.",
+    )
+    parser.add_argument(
+        "--device-like-profile",
+        help="JSON profile built from device recordings for feature-domain coloration/noise.",
+    )
+    parser.add_argument("--device-like-augment-prob", type=float, default=0.0)
+    parser.add_argument("--device-like-coloration-scale", type=float, default=0.5)
+    parser.add_argument("--device-like-noise-scale", type=float, default=0.05)
+    parser.add_argument("--device-like-gain-scale", type=float, default=0.2)
     parser.add_argument("--warmup-epochs", type=int, default=5)
     parser.add_argument("--specaugment", choices=["auto", "off", "on"], default="auto")
     parser.add_argument("--no-tensorboard", action="store_true")
@@ -84,6 +142,8 @@ def main() -> None:
         raise ValueError("--distill-weight > 0 requires --teacher-embeddings")
 
     dataset = ManifestDataset(args.manifest, teacher_embeddings=args.teacher_embeddings)
+    negative_label_idx = dataset.label_to_idx.get("__negative__")
+    confusable_pairs = _load_confusable_pairs(args.confusable_pairs, dataset.label_to_idx)
     if args.valid_manifest:
         train_set = dataset
         valid_set = ManifestDataset(args.valid_manifest, teacher_embeddings=args.teacher_embeddings)
@@ -134,6 +194,11 @@ def main() -> None:
     use_specaugment = args.specaugment == "on" or (
         args.specaugment == "auto" and args.tau in {2, 3, 4}
     )
+    device_like_profile = (
+        load_device_like_profile(args.device_like_profile, args.device)
+        if args.device_like_profile
+        else None
+    )
     writer = None
     if not args.no_tensorboard:
         writer = SummaryWriter(log_dir=out_dir / "tensorboard")
@@ -144,6 +209,15 @@ def main() -> None:
         total_loss = 0.0
         for batch in tqdm(train_loader, desc=f"epoch {epoch + 1}/{args.epochs}"):
             x = batch["features"].to(args.device)
+            if device_like_profile is not None and args.device_like_augment_prob > 0:
+                x = apply_device_like_augmentation(
+                    x,
+                    device_like_profile,
+                    probability=args.device_like_augment_prob,
+                    coloration_scale=args.device_like_coloration_scale,
+                    noise_scale=args.device_like_noise_scale,
+                    gain_scale=args.device_like_gain_scale,
+                )
             if use_specaugment:
                 x = apply_specaugment(x)
             y = batch["label"].to(args.device)
@@ -165,6 +239,34 @@ def main() -> None:
                     student,
                     teacher,
                     args.distill_loss,
+                )
+            if args.negative_prototype_margin_weight > 0:
+                loss = loss + args.negative_prototype_margin_weight * (
+                    _negative_prototype_margin_loss(
+                        emb,
+                        y,
+                        negative_label_idx,
+                        args.negative_prototype_margin,
+                    )
+                )
+            if args.confusable_margin_weight > 0:
+                loss = loss + args.confusable_margin_weight * (
+                    _confusable_pair_margin_loss(
+                        emb,
+                        y,
+                        confusable_pairs,
+                        args.confusable_margin,
+                    )
+                )
+            if args.negative_antisaturation_weight > 0:
+                loss = loss + args.negative_antisaturation_weight * (
+                    _negative_antisaturation_loss(
+                        emb,
+                        y,
+                        negative_label_idx,
+                        args.negative_antisaturation_margin,
+                        args.negative_antisaturation_top_k,
+                    )
                 )
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -201,6 +303,19 @@ def main() -> None:
                     "loss": args.loss,
                     "objective": args.objective,
                     "teacher_dim": teacher_dim,
+                    "negative_prototype_margin_weight": args.negative_prototype_margin_weight,
+                    "negative_prototype_margin": args.negative_prototype_margin,
+                    "confusable_margin_weight": args.confusable_margin_weight,
+                    "confusable_margin": args.confusable_margin,
+                    "confusable_pairs": confusable_pairs,
+                    "negative_antisaturation_weight": args.negative_antisaturation_weight,
+                    "negative_antisaturation_margin": args.negative_antisaturation_margin,
+                    "negative_antisaturation_top_k": args.negative_antisaturation_top_k,
+                    "device_like_profile": args.device_like_profile,
+                    "device_like_augment_prob": args.device_like_augment_prob,
+                    "device_like_coloration_scale": args.device_like_coloration_scale,
+                    "device_like_noise_scale": args.device_like_noise_scale,
+                    "device_like_gain_scale": args.device_like_gain_scale,
                 },
                 out_dir / "best.pt",
             )
@@ -260,6 +375,104 @@ def _distillation_loss(student: torch.Tensor, teacher: torch.Tensor, name: str) 
     if name == "cosine":
         return cosine_distillation_loss(student, teacher)
     raise ValueError(f"Unknown distillation loss: {name}")
+
+
+def _negative_prototype_margin_loss(
+    embeddings: torch.Tensor,
+    labels: torch.Tensor,
+    negative_label_idx: int | None,
+    margin: float,
+) -> torch.Tensor:
+    if negative_label_idx is None:
+        return embeddings.new_zeros(())
+    negative_mask = labels == negative_label_idx
+    positive_labels = labels[~negative_mask].unique(sorted=True)
+    if not bool(negative_mask.any()) or positive_labels.numel() == 0:
+        return embeddings.new_zeros(())
+
+    normalized = F.normalize(embeddings, p=2, dim=-1)
+    prototypes = []
+    for label in positive_labels:
+        label_mask = labels == label
+        prototype = normalized[label_mask].mean(dim=0)
+        prototypes.append(F.normalize(prototype, p=2, dim=0))
+    prototype_tensor = torch.stack(prototypes, dim=0)
+    negative_embeddings = normalized[negative_mask]
+    max_similarity = (negative_embeddings @ prototype_tensor.t()).max(dim=-1).values
+    return F.relu(max_similarity - margin).mean()
+
+
+def _negative_antisaturation_loss(
+    embeddings: torch.Tensor,
+    labels: torch.Tensor,
+    negative_label_idx: int | None,
+    margin: float,
+    top_k: int,
+) -> torch.Tensor:
+    if negative_label_idx is None:
+        return embeddings.new_zeros(())
+    negative_mask = labels == negative_label_idx
+    positive_labels = labels[~negative_mask].unique(sorted=True)
+    if not bool(negative_mask.any()) or positive_labels.numel() == 0:
+        return embeddings.new_zeros(())
+
+    normalized = F.normalize(embeddings, p=2, dim=-1)
+    prototypes = []
+    for label in positive_labels:
+        label_mask = labels == label
+        prototype = normalized[label_mask].mean(dim=0)
+        prototypes.append(F.normalize(prototype, p=2, dim=0))
+    prototype_tensor = torch.stack(prototypes, dim=0)
+    negative_embeddings = normalized[negative_mask]
+    max_similarity = (negative_embeddings @ prototype_tensor.t()).max(dim=-1).values
+    if top_k > 0 and max_similarity.numel() > top_k:
+        max_similarity = torch.topk(max_similarity, k=top_k).values
+    return F.relu(max_similarity - margin).pow(2).mean()
+
+
+def _confusable_pair_margin_loss(
+    embeddings: torch.Tensor,
+    labels: torch.Tensor,
+    pairs: list[tuple[int, int]],
+    margin: float,
+) -> torch.Tensor:
+    if not pairs:
+        return embeddings.new_zeros(())
+
+    normalized = F.normalize(embeddings, p=2, dim=-1)
+    losses = []
+    for left_idx, right_idx in pairs:
+        left_mask = labels == left_idx
+        right_mask = labels == right_idx
+        if not bool(left_mask.any()) or not bool(right_mask.any()):
+            continue
+        left_proto = F.normalize(normalized[left_mask].mean(dim=0), p=2, dim=0)
+        right_proto = F.normalize(normalized[right_mask].mean(dim=0), p=2, dim=0)
+        losses.append(F.relu(torch.dot(left_proto, right_proto) - margin))
+    if not losses:
+        return embeddings.new_zeros(())
+    return torch.stack(losses).mean()
+
+
+def _load_confusable_pairs(
+    path: str | None,
+    label_to_idx: dict[str, int],
+) -> list[tuple[int, int]]:
+    if not path:
+        return []
+    pairs = []
+    for line_no, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), start=1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) != 2:
+            raise ValueError(f"{path}:{line_no}: expected two labels")
+        left, right = parts
+        if left not in label_to_idx or right not in label_to_idx:
+            continue
+        pairs.append((label_to_idx[left], label_to_idx[right]))
+    return pairs
 
 
 def _warmup_cosine_factor(step: int, warmup_steps: int, total_steps: int) -> float:

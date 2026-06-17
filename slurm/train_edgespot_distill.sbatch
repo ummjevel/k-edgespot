@@ -22,6 +22,7 @@ EPOCHS="${EPOCHS:-40}"
 BATCH_SIZE="${BATCH_SIZE:-512}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 LR="${LR:-1e-3}"
+EXTRA_TRAIN_ARGS="${EXTRA_TRAIN_ARGS:-}"
 UV_BIN="${UV_BIN:-uv}"
 
 cd "${PROJECT_DIR}"
@@ -53,6 +54,7 @@ echo "TAUS=${TAUS_CSV}"
 echo "EPOCHS=${EPOCHS}"
 echo "BATCH_SIZE=${BATCH_SIZE}"
 echo "NUM_WORKERS=${NUM_WORKERS}"
+echo "EXTRA_TRAIN_ARGS=${EXTRA_TRAIN_ARGS}"
 echo "UV_BIN=${UV_BIN}"
 
 pids=()
@@ -76,6 +78,7 @@ for idx in "${!TAUS_ARR[@]}"; do
       --batch-size "${BATCH_SIZE}" \
       --num-workers "${NUM_WORKERS}" \
       --lr "${LR}" \
+      ${EXTRA_TRAIN_ARGS} \
       --device cuda
   ) > "${train_log}" 2>&1 &
   pids+=("$!")
