@@ -361,7 +361,7 @@
 - [x] External train/validation split support.
 - [x] Experimental streaming minGRU replacement path for temporal attention.
 
-## Remaining Work
+## Completed Follow-up Work
 
 - [x] Review AIHub target-keyword short rows and define mapping rules:
   - [x] Map clear positives to existing labels such as `weather`, `music_play`,
@@ -381,12 +381,15 @@
 - [x] Confirm reviewed tau4 retrain job `3293` completed.
 - [x] Review metrics from reviewed held-out job `3294`.
 - [x] Review metrics from reviewed full AIHub target scan job `3295`.
-- [ ] Wire `EdgeSpotMinGRU` into the training CLI as an optional encoder.
-- [ ] Train and evaluate the experimental minGRU encoder against the current tau4 attention baseline.
-- [ ] Inspect false accepts from the real-recording Korean negative domain-test and fold the strongest text patterns into hard-negative generation.
 - [x] Confirm conservative tau4 ablation job `3296` completed.
 - [x] Review metrics from conservative held-out job `3297`.
 - [x] Review metrics from conservative full AIHub target scan job `3298`.
+
+## Remaining Work
+
+- [ ] Wire `EdgeSpotMinGRU` into the training CLI as an optional encoder.
+- [ ] Train and evaluate the experimental minGRU encoder against the current tau4 attention baseline.
+- [ ] Inspect false accepts from the real-recording Korean negative domain-test and fold the strongest text patterns into hard-negative generation.
 - [ ] Synthesize another hard-negative batch from the expanded seed list.
 - [ ] Retrain or fine-tune with the expanded hard-negative batch.
 - [ ] Build manifests/extraction scripts for downloaded GSC v2 and MSWC English.

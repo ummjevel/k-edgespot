@@ -306,3 +306,98 @@ OpenWakeWord 개수 맞춤 고정 threshold 결과:
   `--negative-antisaturation-margin 0.9`,
   `--negative-antisaturation-top-k 8`처럼 hard negative만 살짝 누르는 설정을
   먼저 확인하는 것이 좋다.
+
+## Anti-Saturation Grid Results
+
+추가 grid는 데이터 추가 없이 loss 설정만 바꾼 실험이다. 목표는 고정 threshold
+`0.90`, `0.95` 자체가 아니라, hard negative와 positive 점수 분포가
+`0.999...` 포화 구간에서 내려오면서 validation 기반 threshold를 잡을 수 있는지
+확인하는 것이었다.
+
+가장 의미 있었던 run은 1차 grid의 `w01-m097-k4`였다.
+
+- 설정: `--negative-antisaturation-weight 0.1`,
+  `--negative-antisaturation-margin 0.97`,
+  `--negative-antisaturation-top-k 4`.
+- Device split holdout: AUC `0.6818`, Recall@FAR1% `0.6000`,
+  Threshold@FAR1% `0.612756`.
+- OpenWakeWord 개수 맞춤 all45: AUC `0.6160`, Recall@FAR1% `0.3500`,
+  Threshold@FAR1% `0.710312`.
+- 기존 `margin+confusable`처럼 모든 점수가 `0.999...` 근처에 몰리는 문제는
+  줄었지만, all45 recall은 아직 낮다.
+
+Device split holdout 주요 결과:
+
+| Run | AUC | Recall@FAR1% | Threshold@FAR1% | Recall@FAR5% | @0.50 pos recall | @0.50 hard FP |
+|---|---:|---:|---:|---:|---:|---:|
+| `margin+confusable` k5 | n/a | n/a | n/a | n/a | 1.0000 | 11/11 |
+| `w01-m097-k4` 1차 | 0.6818 | 0.6000 | 0.612756 | 0.6000 | 0.7000 | 10/11 |
+| `w005-m097-k4` 2차 | 0.4455 | 0.1000 | 0.999973 | 0.2000 | 1.0000 | 11/11 |
+| `w0075-m097-k4` 2차 | 0.6091 | 0.0000 | 0.999976 | 0.1000 | 1.0000 | 11/11 |
+| `w01-m096-k4` 2차 | 0.4909 | 0.1000 | 0.935232 | 0.1000 | 0.9000 | 9/11 |
+| `w01-m098-k4` 2차 | 0.3545 | 0.0000 | 0.999889 | 0.0000 | 1.0000 | 11/11 |
+| `antisat` aggressive | 0.6636 | 0.1000 | 0.560203 | 0.2000 | 0.4000 | 2/11 |
+
+OpenWakeWord 개수 맞춤 all45 주요 결과:
+
+| Run | AUC | Recall@FAR1% | Threshold@FAR1% | Recall@FAR5% | @0.50 pos recall | @0.50 hard FP |
+|---|---:|---:|---:|---:|---:|---:|
+| `margin+confusable` k5 | n/a | n/a | n/a | n/a | 1.0000 | 25/25 |
+| `w01-m097-k4` 1차 | 0.6160 | 0.3500 | 0.710312 | 0.4000 | 0.7000 | 17/25 |
+| `w005-m097-k4` 2차 | 0.4480 | 0.1500 | 0.999971 | 0.2000 | 1.0000 | 25/25 |
+| `w0075-m097-k4` 2차 | 0.5960 | 0.2000 | 0.999977 | 0.2000 | 1.0000 | 25/25 |
+| `w01-m096-k4` 2차 | 0.5400 | 0.1000 | 0.937047 | 0.1500 | 0.9000 | 23/25 |
+| `w01-m098-k4` 2차 | 0.4820 | 0.1000 | 0.999944 | 0.1500 | 1.0000 | 25/25 |
+| `antisat` aggressive | 0.5620 | 0.1500 | 0.775805 | 0.1500 | 0.5000 | 10/25 |
+
+해석:
+
+- 2차 grid는 1차 `w01-m097-k4`를 넘지 못했다.
+- `w=0.05`, `w=0.075`로 낮추면 다시 `0.999...` saturation으로 돌아갔다.
+- `margin=0.96`은 saturation은 일부 줄였지만 recall과 hard FP 균형이 좋지 않았다.
+- `margin=0.98`은 다시 saturation이 심해졌다.
+- 현재 best candidate는 `w01-m097-k4`다. 다만 all45 Recall@FAR1% `0.3500`은
+  아직 낮으므로, 운영 후보라기보다는 다음 실험의 기준점으로 보는 것이 맞다.
+
+## Remaining Work
+
+우선순위가 높은 남은 작업:
+
+1. `w01-m097-k4`를 기준점으로 두고 다음 실험 방향을 정한다.
+   - 2차 grid는 1차 best를 넘지 못했다.
+   - 데이터 추가 전에는 schedule 방식이 가장 자연스러운 다음 후보이다.
+
+2. anti-saturation schedule 실험
+   - 목적: 초반 embedding 형성을 방해하지 않고 후반에만 hard negative를 누른다.
+   - 방식:
+     - 처음 20~30 epoch는 기존 `margin+confusable`처럼 학습.
+     - 후반 epoch에만 `w=0.1`, `margin=0.97`, `top-k=4` 계열의
+       anti-saturation loss를 켠다.
+   - 기대 효과:
+     - 초반 positive embedding 형성은 유지한다.
+     - 후반에 hard negative score saturation만 누른다.
+
+3. controlled near-miss hard negative 추가
+   - 목적: loss만으로 부족한 near-miss 분리를 데이터로 직접 보강한다.
+   - 우선순위:
+     - 먼저 generated/non-device near-miss hard negatives.
+     - 그 다음 필요하면 `device_split/train_hard_negative`를 직접 학습에 추가.
+   - 주의:
+     - `device_split/holdout_*`는 평가용으로 유지한다.
+     - 실제 wav/checkpoint/log는 git에 커밋하지 않는다.
+
+4. calibration layer 검토
+   - 목적: cosine score를 openWakeWord sigmoid처럼 더 해석 가능한 점수로 바꾼다.
+   - 단, 현재는 positive/hard negative 분리 자체가 부족하므로 calibration은
+     성능 개선 이후에 적용한다.
+
+보류할 작업:
+
+- 현재 방식의 `deviceaug` 재시도는 우선순위를 낮춘다.
+  - 이번 feature-domain profile augmentation은 score saturation을 줄이지 못했다.
+  - 다시 한다면 waveform-level window/noise mixing이나 더 정교한 device impulse
+    approximation으로 재설계해야 한다.
+- positive device 녹음을 학습 데이터로 직접 넣는 실험은 뒤로 미룬다.
+  - 현재 EdgeSpot 구조에서는 positive device sample은 support/enrollment로 쓰는
+    것이 자연스럽다.
+  - 직접 학습에 넣으면 평가 누수와 실제 사용자 등록 시나리오가 섞일 수 있다.
