@@ -11,8 +11,8 @@
 set -euo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-/data/users/voice/zoey/todak/impl/EdgeSpot}"
-DATA_ROOT="${DATA_ROOT:-/data/datasets/voice/aihub_537/full}"
-EXTRACTED_ROOT="${EXTRACTED_ROOT:-/data/datasets/voice/aihub_537/full_extracted}"
+DATA_ROOT="${DATA_ROOT:-/data/datasets/voice/aihub_537/call_only}"
+EXTRACTED_ROOT="${EXTRACTED_ROOT:-/data/datasets/voice/aihub_537/call_only_extracted}"
 MANIFEST_DIR="${MANIFEST_DIR:-${PROJECT_DIR}/data/manifests/aihub_537_invocation}"
 MIN_LABEL_COUNT="${MIN_LABEL_COUNT:-20}"
 MAX_LABELS="${MAX_LABELS:-2048}"

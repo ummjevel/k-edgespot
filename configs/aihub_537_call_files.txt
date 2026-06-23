@@ -1,0 +1,10 @@
+# datasetkey: 537
+# split,kind,subset,size,file_key,filename
+Training,label,call,1.99GB,55144,TL_call_01.zip
+Training,label,call,1.94GB,55145,TL_call_02.zip
+Training,label,call,1.55GB,55146,TL_call_03.zip
+Training,source,call,96.10GB,55151,TS_call_01.zip
+Training,source,call,87.80GB,55152,TS_call_02.zip
+Training,source,call,70.21GB,55153,TS_call_03.zip
+Validation,label,call,702.43MB,55158,VL_call_01.zip
+Validation,source,call,34.99GB,55162,VS_call_01.zip

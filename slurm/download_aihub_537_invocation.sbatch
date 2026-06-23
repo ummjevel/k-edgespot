@@ -11,10 +11,10 @@
 set -euo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-/data/users/voice/zoey/todak/impl/EdgeSpot}"
-OUT_DIR="${OUT_DIR:-/data/datasets/voice/aihub_537/full}"
+OUT_DIR="${OUT_DIR:-/data/datasets/voice/aihub_537/call_only}"
 AIHUBSHELL="${AIHUBSHELL:-/data/datasets/voice/aihubshell}"
 AIHUB_APIKEY_FILE="${AIHUB_APIKEY_FILE:-/data/datasets/voice/.secrets/aihub_api_key}"
-FILE_KEYS="${FILE_KEYS:-all}"
+FILE_LIST="${FILE_LIST:-${PROJECT_DIR}/configs/aihub_537_call_files.txt}"
 
 cd "${PROJECT_DIR}"
 mkdir -p logs "${OUT_DIR}"
@@ -36,6 +36,20 @@ fi
 
 echo "DATASET_KEY=537"
 echo "OUT_DIR=${OUT_DIR}"
+echo "FILE_LIST=${FILE_LIST}"
+
+FILE_KEYS="$(
+  awk -F',' '
+    /^[[:space:]]*#/ { next }
+    NF >= 5 { gsub(/[[:space:]]/, "", $5); if ($5 != "") print $5 }
+  ' "${FILE_LIST}" | paste -sd, -
+)"
+
+if [[ -z "${FILE_KEYS}" ]]; then
+  echo "No file keys found in ${FILE_LIST}" >&2
+  exit 1
+fi
+
 echo "FILE_KEYS=${FILE_KEYS}"
 
 cd "${OUT_DIR}"
