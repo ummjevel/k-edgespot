@@ -2,6 +2,77 @@
 
 Generated from prototype evaluation JSON files under `runs/`.
 
+## Latest Practical Ranking
+
+2026-06-23 기준 최신 후보를 device wake-word 관점으로 다시 정리했다.
+
+랭킹 기준:
+
+1. `Device Split Holdout`의 AUC와 Recall@FAR1%.
+2. `OpenWakeWord-Matched all45`의 Recall@FAR1%와 hard-negative 분리.
+3. `Large General Conservative`는 일반 command/negative ranking 보조지표로만 사용.
+4. `AIHub validation FAR noise-only`는 Qwen3-TTS 생성 음성과 녹음 음성 positive를
+   제외하고, 소음환경 negative만 222,044개 평가한 별도 false-accept 압력 지표로
+   사용한다. 이 평가는 positive가 없으므로 AUC/recall은 없다.
+
+| Rank | Checkpoint | 역할 | Device split AUC | Device split Recall@FAR1% | all45 AUC | all45 Recall@FAR1% | Large AUC | Large Recall@FAR1% | Noise-only Threshold@FAR1% | 판단 |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | `edgespot-ko-proxy-noise50far-margin-confusable-tau4` | 현재 baseline / 운영 후보 | 0.7818 | 0.6000 | 0.5540 | 0.1000 | 0.9349 | 0.8652 | 0.3519 | device split 기준 가장 안정적이다. all45는 약하지만 현재 후보 중 device holdout 균형이 제일 낫다. |
+| 2 | `edgespot-ko-proxy-noise50far-margin-confusable-posdeviceaug-w35-tau4` | positive-only device-like augmentation | 0.5455 | 0.4000 | 0.5920 | 0.2000 | 0.9601 | 0.8605 | 0.4516 | large/all45 ranking은 좋아졌지만 device split AUC가 낮아 운영 후보로는 baseline보다 약하다. |
+| 3 | `edgespot-ko-proxy-noise50far-margin-confusable-posdeviceaug-w50-antisat-w01-tau4` | exported second candidate | 0.6818 | 0.3000 | 0.5580 | 0.2000 | 0.9686 | 0.8558 | 0.4608 | large AUC는 가장 높지만 device hard negative에서 threshold tradeoff가 나쁘다. |
+| 4 | `edgespot-ko-proxy-noise50far-margin-confusable-posdeviceaug-w25-tau4` | weak positive-only device-like augmentation | 0.6727 | 0.3000 | 0.6080 | 0.1000 | 0.9554 | 0.8487 | 0.4812 | all45 AUC는 높지만 Recall@FAR1%가 낮다. |
+| 5 | `edgespot-ko-proxy-noise50far-clean-margin-confusable-tau4` | clean/noise50far ablation | 0.6636 | 0.2000 | 0.5580 | 0.0500 | 0.9216 | 0.5366 | n/a | device split은 일부 남지만 large recall이 낮다. |
+| 6 | `edgespot-ko-proxy-noise-plus50-margin-confusable-tau4` | AIHub 소음환경 +50GB | 0.5000 | 0.1000 | 0.5800 | 0.0000 | 0.9469 | 0.8463 | 0.5100 | large AUC는 올라갔지만 device split이 무너졌다. |
+| 7 | `edgespot-ko-cmdaux-pretrain-noise50far-finetune-tau4` | command auxiliary pretrain 후 fine-tune | 0.5182 | 0.1000 | 0.5220 | 0.0500 | 0.9394 | 0.7943 | 0.5798 | command auxiliary만으로 device robustness가 개선되지는 않았다. |
+| 8 | `edgespot-ko-proxy-noise-plus100-margin-confusable-tau4` | AIHub 소음환경 +100GB | 0.5545 | 0.0000 | 0.5680 | 0.0000 | 0.9474 | 0.6359 | 0.4407 | negative 양 증가만으로 device 성능이 좋아지지 않았다. |
+| 9 | `edgespot-ko-cmdaux-deviceaug-pretrain-noise50far-finetune-weakdeviceaug-tau4` | command auxiliary + weak device-like fine-tune | 0.5273 | 0.0000 | 0.5760 | 0.0500 | 0.9457 | 0.7801 | 0.5392 | large는 괜찮지만 device split Recall@FAR1%가 0이다. |
+
+최신 결론:
+
+- 현재 운영 후보는 여전히 `edgespot-ko-proxy-noise50far-margin-confusable-tau4`다.
+- large general AUC만 보면 `posdeviceaug-w50-antisat-w01`가 가장 좋지만, device
+  hard negative와 positive score가 겹쳐 실제 wake-word threshold 선택이 어렵다.
+- positive에만 device-like augmentation을 주는 실험은 large AUC를 올릴 수 있지만,
+  device split 일반화는 개선하지 못했다.
+- 다음 실험은 labeled `device_positive_eval`/`device_hard_negative_eval` 45개를
+  학습에 넣지 않고, top-level `device_record/*.wav` profile만 사용해 positive와
+  hard negative 양쪽에 같은 device-like augmentation을 적용하는 것이 우선이다.
+
+## Large General And Noise-Only Negative Results
+
+`Large General Conservative`는 Qwen3-TTS/generated command positive와 large
+negative가 섞인 26,742개 평가다. 반면 `AIHub validation FAR noise-only`는
+Qwen3-TTS 생성 음성과 녹음 음성 positive를 제외하고 AIHub 소음환경 negative만
+222,044개 평가한 것이다. Noise-only에는 positive가 없으므로 threshold quantile만
+기록한다. 낮은 `Threshold@FARx`일수록 해당 noise-only set의 negative score가 낮게
+눌렸다는 뜻이다.
+
+| Checkpoint | Large AUC | Large Recall@FAR0.1% | Large Recall@FAR1% | Large Recall@FAR5% | Noise-only Th@FAR0.1% | Noise-only Th@FAR1% | Noise-only Th@FAR5% |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `noise50far-margin-confusable` | 0.9349 | 0.5201 | 0.8652 | 0.9007 | 0.5619 | 0.3519 | 0.3314 |
+| `posdeviceaug-w25` | 0.9554 | 0.3522 | 0.8487 | 0.9007 | 0.8111 | 0.4812 | 0.3574 |
+| `posdeviceaug-w35` | 0.9601 | 0.3783 | 0.8605 | 0.8983 | 0.7216 | 0.4516 | 0.3159 |
+| `posdeviceaug-w50-antisat-w01` | 0.9686 | 0.3333 | 0.8558 | 0.9078 | 0.7282 | 0.4608 | 0.3765 |
+| `plus50-noise` | 0.9469 | 0.3168 | 0.8463 | 0.9007 | 0.6250 | 0.5100 | 0.4770 |
+| `plus100-noise` | 0.9474 | 0.1631 | 0.6359 | 0.8652 | 0.7593 | 0.4407 | 0.3633 |
+| `cmdaux-finetune` | 0.9394 | 0.4799 | 0.7943 | 0.8629 | 0.7306 | 0.5798 | 0.4532 |
+| `cmdaux-deviceaug-finetune` | 0.9457 | 0.5225 | 0.7801 | 0.8652 | 0.6877 | 0.5392 | 0.4174 |
+| `aihub-command-aux` | 0.8858 | 0.0686 | 0.1631 | 0.5083 | 0.8603 | 0.8295 | 0.6980 |
+| `aihub-command-aux-deviceaug` | 0.8921 | 0.0307 | 0.0969 | 0.5366 | 0.8858 | 0.8636 | 0.6966 |
+
+해석:
+
+- `posdeviceaug-w50-antisat-w01`는 large AUC 0.9686으로 가장 높지만, noise-only
+  Threshold@FAR1%가 0.4608로 baseline 0.3519보다 높다. 즉 large ranking은
+  좋아졌지만 pure noise negative 점수는 더 높아졌다.
+- `noise50far-margin-confusable` baseline은 large AUC가 최고는 아니지만,
+  noise-only Threshold@FAR1%가 낮고 device split Recall@FAR1%가 가장 높아 현재
+  균형이 제일 좋다.
+- command auxiliary pretrain 계열은 그대로 쓰면 noise-only threshold가 높다.
+  fine-tune 후에도 device split 개선은 제한적이었다.
+- AIHub 소음환경 negative를 단순히 더 많이 추가한 `plus50`/`plus100`은 large AUC를
+  올렸지만 device split recall을 악화시켰다.
+
 ## Best Runs
 
 | Rank | Family | Tau | K-shot | AUC | Recall@FAR0.1% | Recall@FAR1% | Recall@FAR5% |
@@ -401,3 +472,67 @@ OpenWakeWord 개수 맞춤 all45 주요 결과:
   - 현재 EdgeSpot 구조에서는 positive device sample은 support/enrollment로 쓰는
     것이 자연스럽다.
   - 직접 학습에 넣으면 평가 누수와 실제 사용자 등록 시나리오가 섞일 수 있다.
+
+## 2026-06-22 AIHub Training Noise Scale 결과
+
+목적:
+
+- 기존 `noise50far-margin-confusable-tau4`에서 AIHub training 소음환경 데이터를
+  더 많이 붙였을 때 성능이 좋아지는지 확인했다.
+- 비교 모델:
+  - `50far`: 기존 best 후보
+  - `plus50`: 추가 training 소음환경 약 +50GB
+  - `plus100`: 추가 training 소음환경 약 +100GB
+- 모두 `margin+confusable`, `tau4`, 30 epoch 계열이다.
+
+평가 결과:
+
+| model | eval | AUC | Recall@FAR0.1% | Recall@FAR1% | Recall@FAR5% |
+|---|---:|---:|---:|---:|---:|
+| 50far | device split | 0.7818 | 0.6000 | 0.6000 | 0.6000 |
+| plus50 | device split | 0.5000 | 0.1000 | 0.1000 | 0.1000 |
+| plus100 | device split | 0.5545 | 0.0000 | 0.0000 | 0.0000 |
+| 50far | all45 | 0.5540 | 0.1000 | 0.1000 | 0.1500 |
+| plus50 | all45 | 0.5800 | 0.0000 | 0.0000 | 0.1000 |
+| plus100 | all45 | 0.5680 | 0.0000 | 0.0000 | 0.0500 |
+| 50far | large | 0.9349 | 0.5201 | 0.8652 | 0.9007 |
+| plus50 | large | 0.9469 | 0.3168 | 0.8463 | 0.9007 |
+| plus100 | large | 0.9474 | 0.1631 | 0.6359 | 0.8652 |
+
+해석:
+
+- 대량 negative 추가는 large general AUC를 올렸다.
+  - `50far` large AUC 0.9349에서 `plus50` 0.9469, `plus100` 0.9474로 상승했다.
+- 하지만 실제로 중요한 device split recall은 크게 나빠졌다.
+  - `50far`는 Recall@FAR1% 0.6000이다.
+  - `plus50`은 0.1000, `plus100`은 0.0000이다.
+- 따라서 단순히 AIHub 소음환경 명령어를 대량 negative로 덧붙이는 방향은
+  운영 후보로 부적합하다.
+- 현재 운영 후보 기준은 여전히 `noise50far-margin-confusable-tau4`가 가장 낫다.
+
+후속 방향:
+
+- `토닥아/토닥이` positive를 직접 증강하지 않는다.
+  - 호출어가 바뀔 수 있으므로 특정 호출어에 종속된 학습을 피한다.
+- AIHub JSON의 `beginOfSpeech`, `speechLength`, `endOfSpeech` 기준으로 발화 구간을
+  잘라 사용한다.
+- AIHub 발화 구간은 wake word positive가 아니라 command auxiliary objective로 사용한다.
+  - 같은 command label의 여러 소음/거리/기기 조건 녹음은 가깝게 만든다.
+  - 다른 command label은 분리한다.
+- device 녹음 negative는 학습 샘플로 직접 넣지 않고, device-like augmentation profile
+  추정용으로만 사용한다.
+  - 목적은 특정 발화를 외우는 것이 아니라 기기 coloration/level/noise 변화에 덜 흔들리는
+    embedding을 만드는 것이다.
+
+체크포인트별 짧은 해석:
+
+| checkpoint | 역할 | 해석 |
+|---|---|---|
+| `edgespot-ko-proxy-noise50far-margin-confusable-tau4` | 현재 baseline / 운영 후보 | device split과 large general의 균형이 가장 낫다. 대량 추가 실험 전 기준점으로 유지한다. |
+| `edgespot-ko-proxy-noise50far-margin-confusable-antisat-w01-m097-k4-tau4` | anti-saturation 후보 | hard negative score saturation을 누르려 했지만 device recall이 크게 개선되지는 않았다. |
+| `edgespot-ko-proxy-noise50far-clean-margin-confusable-tau4` | AIHub training-only 비교군 | 기존 hard-negative 구성 없이 AIHub training noise만 붙인 비교군이다. 운영 후보보다는 ablation 성격이다. |
+| `edgespot-ko-proxy-noise50far-clean-margin-confusable-antisat-w01-m097-k4-tau4` | clean + anti-saturation 비교군 | large AUC는 좋았지만 device split이 약하다. general ranking과 device robustness가 분리된다는 근거로 본다. |
+| `edgespot-ko-proxy-noise-plus50-margin-confusable-tau4` | 대량 negative +50GB 실험 | large AUC는 올랐지만 device split recall이 무너졌다. 단순 negative 확장은 부적합하다. |
+| `edgespot-ko-proxy-noise-plus100-margin-confusable-tau4` | 대량 negative +100GB 실험 | +50GB보다 더 강하게 device recall이 악화됐다. 데이터 양 증가만으로 해결되지 않는다는 실패 사례다. |
+| `edgespot-ko-aihub-command-aux-tau4` | command auxiliary pretrain 후보 | 같은 AIHub command끼리 뭉치게 학습한 encoder 초기화 후보이다. 그대로 운영하기에는 AIHub noise-only negative score가 높다. |
+| `edgespot-ko-aihub-command-aux-deviceaug-tau4` | command auxiliary + device-like pretrain 후보 | command auxiliary에 device-like augmentation을 더한 pretrain 후보이다. 기기 불변 표현을 기대했지만 그대로 쓰면 false accept 위험이 커 fine-tune 전제가 필요하다. |
