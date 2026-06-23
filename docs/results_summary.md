@@ -2,7 +2,7 @@
 
 Generated from prototype evaluation JSON files under `runs/`.
 
-Conceptual note: [Wake Word vs Command Spotting Notes](wakeword_vs_command_spotting.md)
+Conceptual note: [Command-like Keyword vs Ultra-short Wake-word Notes](wakeword_vs_command_spotting.md)
 summarizes why the Todak wake-word task behaves differently from broader command
 spotting.
 

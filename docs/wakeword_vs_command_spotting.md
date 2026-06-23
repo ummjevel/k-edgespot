@@ -1,13 +1,13 @@
-# Wake Word vs Command Spotting Notes
+# Command-like Keyword vs Ultra-short Wake-word Notes
 
 This note captures the working interpretation behind the Todak device experiments.
 
 ## Core Difference
 
-Command spotting and wake-word spotting look similar at the embedding/prototype
+Command-like keyword spotting and ultra-short wake-word spotting look similar at the embedding/prototype
 level, but the error modes are different.
 
-Command spotting usually has a wider semantic surface. A command such as turning
+Command-like keyword spotting usually has a wider semantic surface. A command such as turning
 on a light can appear as:
 
 ```text
@@ -63,7 +63,7 @@ ACCEPT 0.954425 토닥이 negative todatoda_3.wav
 means `todatoda_3.wav` landed close to the `토닥이` prototype. It does not mean
 the model transcribed the audio as `토닥이`.
 
-This is acceptable for command spotting when broad semantic regions are well
+This is acceptable for command-like keyword spotting when broad semantic regions are well
 separated. It is harder for wake words because near-miss phrases can be close in
 the same embedding space:
 
@@ -119,20 +119,59 @@ coloration/noise/gain augmentation to both positive and negative training rows.
 The goal is to avoid the shortcut where `device-like sound` becomes correlated
 only with the wake word.
 
+## AIHub Invocation Data Hypothesis
+
+The AIHub invocation dataset discussed for follow-up work is better aligned with
+Todak than the command/noise dataset because its largest reported slice is
+`호출어` data, not arbitrary command intent data:
+
+```text
+호출어: 5,269 hours
+공통문장: 370 hours
+랜덤텍스트: 2,667 hours
+호출어+공통문장: 446 hours
+```
+
+That makes it a strong candidate for wake-word-form training. The important
+constraint is label handling. If the invocation phrases are not literally Todak
+variants, they should not all be merged into the Todak positive class. Doing so
+would teach the model that many unrelated invocation words are acceptable
+matches, which can increase false accepts on wake-word-like Korean phrases.
+
+Preferred uses:
+
+1. Use invocation labels as separate few-shot keyword classes so same-phrase
+   examples are pulled together and different invocation phrases remain apart.
+2. Use the corpus for wake-word-form pretraining or auxiliary batches, then keep
+   Todak recognition driven by Todak support prototypes.
+3. Mix it at a larger rate than generic command/noise positives, because the
+   acoustic and lexical shape is closer to ultra-short wake-word spotting.
+4. Keep generated/confusable near-miss negatives in the mix, because invocation
+   positives alone do not teach the boundary against `토닥`, `토닥토닥`, or
+   `토마토닥`.
+5. Continue holding out `device_positive_eval` and `device_hard_negative_eval`
+   entirely for final device comparison.
+
+This should be treated as a higher-priority data experiment than adding more
+generic command-like positives. It tests whether the model is missing
+short-invocation structure, while the current both-side device augmentation
+tests whether it is missing deployment-channel robustness.
+
 ## Practical Direction
 
 The likely sequence is:
 
 1. Apply device-like augmentation to both positive and negative rows.
-2. Add or strengthen generated non-device near-miss hard negatives.
-3. Evaluate unified wake-word prototype scoring, because `토닥아` and `토닥이`
+2. Add AIHub invocation data as label-aware auxiliary/pretraining data.
+3. Add or strengthen generated non-device near-miss hard negatives.
+4. Evaluate unified wake-word prototype scoring, because `토닥아` and `토닥이`
    are both accepted variants.
-4. Use anti-saturation loss carefully or on a schedule to avoid collapsing
+5. Use anti-saturation loss carefully or on a schedule to avoid collapsing
    positive recall.
-5. Consider a verifier/calibration layer only after the embedding separation
+6. Consider a verifier/calibration layer only after the embedding separation
    improves.
 
-The key insight is that command spotting benefits from broad semantic grouping,
+The key insight is that command-like keyword spotting benefits from broad semantic grouping,
 while wake-word spotting depends on tight acoustic boundaries. EdgeSpot's
 few-shot prototype setup may work well for command spotting but needs extra
 near-miss and channel-robustness work to compete with a direct wake-word
