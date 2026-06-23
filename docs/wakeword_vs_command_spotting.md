@@ -142,14 +142,16 @@ Preferred uses:
 
 1. Use invocation labels as separate few-shot keyword classes so same-phrase
    examples are pulled together and different invocation phrases remain apart.
-2. Use the corpus for wake-word-form pretraining or auxiliary batches, then keep
+2. Train an invocation-only baseline to test whether short invocation data alone
+   improves the few-shot embedding space before mixing it with other data.
+3. Use the corpus for wake-word-form pretraining or auxiliary batches, then keep
    Todak recognition driven by Todak support prototypes.
-3. Mix it at a larger rate than generic command/noise positives, because the
+4. Mix it at a larger rate than generic command/noise positives, because the
    acoustic and lexical shape is closer to ultra-short wake-word spotting.
-4. Keep generated/confusable near-miss negatives in the mix, because invocation
+5. Keep generated/confusable near-miss negatives in the mix, because invocation
    positives alone do not teach the boundary against `토닥`, `토닥토닥`, or
    `토마토닥`.
-5. Continue holding out `device_positive_eval` and `device_hard_negative_eval`
+6. Continue holding out `device_positive_eval` and `device_hard_negative_eval`
    entirely for final device comparison.
 
 This should be treated as a higher-priority data experiment than adding more
@@ -162,13 +164,14 @@ tests whether it is missing deployment-channel robustness.
 The likely sequence is:
 
 1. Apply device-like augmentation to both positive and negative rows.
-2. Add AIHub invocation data as label-aware auxiliary/pretraining data.
-3. Add or strengthen generated non-device near-miss hard negatives.
-4. Evaluate unified wake-word prototype scoring, because `토닥아` and `토닥이`
+2. Train an AIHub invocation-only baseline with phrase labels kept separate.
+3. Add AIHub invocation data as label-aware auxiliary/pretraining data.
+4. Add or strengthen generated non-device near-miss hard negatives.
+5. Evaluate unified wake-word prototype scoring, because `토닥아` and `토닥이`
    are both accepted variants.
-5. Use anti-saturation loss carefully or on a schedule to avoid collapsing
+6. Use anti-saturation loss carefully or on a schedule to avoid collapsing
    positive recall.
-6. Consider a verifier/calibration layer only after the embedding separation
+7. Consider a verifier/calibration layer only after the embedding separation
    improves.
 
 The key insight is that command-like keyword spotting benefits from broad semantic grouping,
