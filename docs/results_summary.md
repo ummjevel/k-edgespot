@@ -2,6 +2,10 @@
 
 Generated from prototype evaluation JSON files under `runs/`.
 
+Conceptual note: [Wake Word vs Command Spotting Notes](wakeword_vs_command_spotting.md)
+summarizes why the Todak wake-word task behaves differently from broader command
+spotting.
+
 ## Latest Practical Ranking
 
 2026-06-23 기준 최신 후보를 device wake-word 관점으로 다시 정리했다.
