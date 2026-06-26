@@ -6,6 +6,51 @@ Conceptual note: [Command-like Keyword vs Ultra-short Wake-word Notes](wakeword_
 summarizes why the Todak wake-word task behaves differently from broader command
 spotting.
 
+Narrative summary: [EdgeSpot Todak Training Flow Summary](training_flow_summary.md)
+explains the experiment flow, lessons learned, and next decisions in one place.
+
+## 2026-06-26 Paper-Style Follow-Up
+
+`edgespot-ko-aihub537-paper-distill-noise50far-finetune-tau4`에서 시작해 6개 후속
+fine-tune을 병렬 실행했다. 결론은 두 후보를 목적별로 나눠 보는 것이 맞다.
+
+- AUC/논문식 종합 지표 후보:
+  `edgespot-ko-aihub537-paper-distill-noise50far-finetune-tau4`
+- strict FAR 운영 후보:
+  `edgespot-ko-aihub537-paper-distill-noise50far-bothdevaug-p20-finetune-tau4`
+
+Large General Conservative 기준:
+
+| Run | Large AUC | Recall@FAR0.1% | Threshold@FAR0.1% | Recall@FAR0.5% | Threshold@FAR0.5% | Recall@FAR1% | Threshold@FAR1% | Recall@FAR5% | Threshold@FAR5% |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `paper-distill-noise50far-finetune` | 0.9746 | 0.6099 | 0.845718 | 0.7967 | 0.738789 | 0.8345 | 0.676600 | 0.9007 | 0.495053 |
+| `paper-distill-noise50far-bothdevaug-p20-finetune` | 0.9723 | 0.6643 | 0.819217 | 0.7920 | 0.722693 | 0.8440 | 0.653657 | 0.9007 | 0.474577 |
+
+Device split / all45 sanity check:
+
+| Run | Device split AUC | Device split Recall@FAR1% | Device split Th@FAR1% | all45 AUC | all45 Recall@FAR1% | all45 Th@FAR1% |
+|---|---:|---:|---:|---:|---:|---:|
+| `paper-distill-noise50far-finetune` | 0.4727 | 0.1000 | 0.969133 | 0.5200 | 0.0500 | 0.969356 |
+| `paper-distill-noise50far-bothdevaug-p20-finetune` | 0.4818 | 0.2000 | 0.974301 | 0.5380 | 0.0500 | 0.979675 |
+
+AIHub 537 invocation multiclass validation:
+
+| Run | top1 | top5 | top10 | same-vs-impostor AUC | mean rank | MRR |
+|---|---:|---:|---:|---:|---:|---:|
+| `paper-distill-noise50far-finetune` | 0.1692 | 0.3377 | 0.4235 | 0.7015 | 48.50 | 0.2557 |
+| `paper-distill-noise50far-bothdevaug-p20-finetune` | 0.1314 | 0.2880 | 0.3743 | 0.6655 | 53.87 | 0.2140 |
+
+해석:
+
+- `bothdevaug-p20`은 Large General에서 Recall@FAR0.1% 전체 1위이며,
+  Recall@FAR1%도 기존 paper fine-tune보다 높다.
+- `paper-distill-noise50far-finetune`은 AUC와 AIHub multiclass 지표가 더 좋다.
+- 두 후보 모두 device split AUC는 아직 낮다. 실제 wake-word 운영 모델로 확정하기
+  전에는 device hard negative를 더 강하게 보는 별도 검증이 필요하다.
+- 두 후보 모두 고정 입력 `[1, 1, 40, 101]` ONNX export와 ONNXRuntime CPU dummy
+  inference 검증을 완료했다. Dynamic batch export는 adaptive pooling output size
+  문제로 실패했으므로 현재 배포 산출물은 fixed batch 전용이다.
+
 ## Latest Practical Ranking
 
 2026-06-23 기준 최신 후보를 device wake-word 관점으로 다시 정리했다.
